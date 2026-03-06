@@ -15,5 +15,6 @@ instance/
 # Secrets & credentials
 Mailgun api.txt
 bewerbercheck-pro-*.json
+DEPLOY-CHECKLIST.md
 *.exe
 .claude/

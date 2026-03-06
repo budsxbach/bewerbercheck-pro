@@ -53,7 +53,7 @@ def register():
         while CustomerSettings.query.filter_by(email_token=token).first():
             token = uuid.uuid4().hex[:8]
 
-        mailgun_domain = current_app.config.get("MAILGUN_DOMAIN", "bewerbungswandler.de")
+        mailgun_domain = current_app.config.get("MAILGUN_DOMAIN", "systemautomatik.com")
         settings = CustomerSettings(
             user_id=user.id,
             email_token=token,
@@ -77,7 +77,7 @@ def _create_mailgun_route(user_id: int, email_address: str):
     import requests
 
     api_key = current_app.config.get("MAILGUN_API_KEY")
-    domain = current_app.config.get("MAILGUN_DOMAIN")
+    api_base = current_app.config.get("MAILGUN_API_BASE", "https://api.eu.mailgun.net/v3")
     app_url = current_app.config.get("APP_URL", "http://localhost:5000")
 
     if not api_key:
@@ -86,7 +86,7 @@ def _create_mailgun_route(user_id: int, email_address: str):
 
     try:
         requests.post(
-            "https://api.mailgun.net/v3/routes",
+            f"{api_base}/routes",
             auth=("api", api_key),
             data={
                 "priority": 1,
@@ -99,8 +99,53 @@ def _create_mailgun_route(user_id: int, email_address: str):
             },
             timeout=10,
         )
+        current_app.logger.info(f"Mailgun-Route angelegt: {email_address} → {app_url}/webhook/email")
     except Exception as e:
         current_app.logger.error(f"Mailgun Route Fehler: {e}")
+
+
+def repariere_mailgun_route(user_id: int, email_address: str) -> bool:
+    """Löscht alte Mailgun-Routen für die Adresse und legt eine neue mit der aktuellen APP_URL an.
+    Gibt True zurück, wenn erfolgreich."""
+    import requests
+
+    api_key = current_app.config.get("MAILGUN_API_KEY")
+    api_base = current_app.config.get("MAILGUN_API_BASE", "https://api.eu.mailgun.net/v3")
+    app_url = current_app.config.get("APP_URL", "http://localhost:5000")
+
+    if not api_key:
+        current_app.logger.warning("MAILGUN_API_KEY nicht gesetzt – Route nicht repariert.")
+        return False
+
+    try:
+        # Alle existierenden Routen holen und passende löschen
+        resp = requests.get(
+            f"{api_base}/routes",
+            auth=("api", api_key),
+            params={"limit": 100},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        routes = resp.json().get("items", [])
+
+        for route in routes:
+            expression = route.get("expression", "")
+            if email_address in expression:
+                route_id = route["id"]
+                requests.delete(
+                    f"{api_base}/routes/{route_id}",
+                    auth=("api", api_key),
+                    timeout=10,
+                )
+                current_app.logger.info(f"Alte Mailgun-Route gelöscht: {route_id}")
+
+        # Neue Route mit korrekter APP_URL anlegen
+        _create_mailgun_route(user_id, email_address)
+        return True
+
+    except Exception as e:
+        current_app.logger.error(f"Mailgun Route Reparatur Fehler: {e}")
+        return False
 
 
 # ─── Login / Logout ───────────────────────────────────────────────────────────

@@ -15,7 +15,8 @@ class Config:
 
     # Mailgun
     MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY")
-    MAILGUN_DOMAIN = os.environ.get("MAILGUN_DOMAIN", "bewerbungswandler.de")
+    MAILGUN_DOMAIN = os.environ.get("MAILGUN_DOMAIN", "systemautomatik.com")
+    MAILGUN_API_BASE = os.environ.get("MAILGUN_API_BASE", "https://api.eu.mailgun.net/v3")
     MAILGUN_WEBHOOK_SIGNING_KEY = os.environ.get("MAILGUN_WEBHOOK_SIGNING_KEY")
 
     # Anthropic
@@ -41,3 +42,6 @@ class Config:
 
     # App URL (for Stripe redirects)
     APP_URL = os.environ.get("APP_URL", "http://localhost:5000")
+
+    # Admin diagnostic key (protects /admin/mailgun-diagnose)
+    ADMIN_DIAGNOSE_KEY = os.environ.get("ADMIN_DIAGNOSE_KEY")

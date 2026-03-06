@@ -1,8 +1,8 @@
 import os
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_required, current_user
 
-from .models import db, CustomerSettings
+from .models import db, CustomerSettings, User
 
 settings_bp = Blueprint("settings_bp", __name__)
 
@@ -35,6 +35,139 @@ def index():
 
     service_account_email = _get_service_account_email()
     return render_template("settings.html", settings=settings, service_account_email=service_account_email)
+
+
+@settings_bp.route("/einstellungen/route-reparieren", methods=["POST"])
+@login_required
+def route_reparieren():
+    """Löscht alte Mailgun-Route und legt eine neue mit der aktuellen APP_URL an."""
+    settings = current_user.settings
+    if not settings or not settings.eigene_email:
+        flash("Keine E-Mail-Adresse gefunden.", "danger")
+        return redirect(url_for("settings_bp.index"))
+
+    from .auth import repariere_mailgun_route
+    success = repariere_mailgun_route(current_user.id, settings.eigene_email)
+
+    if success:
+        flash("Mailgun-Route wurde erfolgreich neu erstellt. E-Mail-Empfang sollte jetzt funktionieren.", "success")
+    else:
+        flash("Route konnte nicht repariert werden – bitte MAILGUN_API_KEY prüfen.", "danger")
+
+    return redirect(url_for("settings_bp.index"))
+
+
+@settings_bp.route("/admin/mailgun-diagnose")
+def admin_mailgun_diagnose():
+    """Admin-Diagnose: Zeigt alle Mailgun-Routen und ob sie zur aktuellen APP_URL passen.
+    Erfordert ?key=ADMIN_KEY (gesetzt über ADMIN_DIAGNOSE_KEY in Env-Variablen)."""
+    import requests
+
+    expected_key = current_app.config.get("ADMIN_DIAGNOSE_KEY") or os.environ.get("ADMIN_DIAGNOSE_KEY")
+    if not expected_key or request.args.get("key") != expected_key:
+        return jsonify({"error": "Unauthorized – ?key=ADMIN_DIAGNOSE_KEY erforderlich"}), 401
+
+    api_key = current_app.config.get("MAILGUN_API_KEY")
+    api_base = current_app.config.get("MAILGUN_API_BASE", "https://api.eu.mailgun.net/v3")
+    app_url = current_app.config.get("APP_URL", "")
+    domain = current_app.config.get("MAILGUN_DOMAIN", "systemautomatik.com")
+
+    result = {
+        "app_url": app_url,
+        "mailgun_domain": domain,
+        "api_base": api_base,
+        "webhook_target": f"{app_url}/webhook/email",
+        "routes": [],
+        "users_without_route": [],
+    }
+
+    # Mailgun-Routen laden
+    if api_key:
+        try:
+            resp = requests.get(
+                f"{api_base}/routes",
+                auth=("api", api_key),
+                params={"limit": 100},
+                timeout=10,
+            )
+            resp.raise_for_status()
+            routes = resp.json().get("items", [])
+            webhook_url = f"{app_url}/webhook/email"
+
+            for route in routes:
+                actions = route.get("actions", [])
+                forward_ok = any(webhook_url in a for a in actions)
+                result["routes"].append({
+                    "id": route["id"],
+                    "expression": route.get("expression"),
+                    "actions": actions,
+                    "webhook_ok": forward_ok,
+                })
+        except Exception as e:
+            result["routes_error"] = str(e)
+
+    # Kunden ohne funktionierende Route prüfen
+    all_settings = CustomerSettings.query.all()
+    route_emails = {r["expression"] for r in result.get("routes", [])}
+    for s in all_settings:
+        if s.eigene_email and s.eigene_email not in " ".join(route_emails):
+            result["users_without_route"].append({
+                "user_id": s.user_id,
+                "email": s.eigene_email,
+            })
+
+    return jsonify(result)
+
+
+@settings_bp.route("/admin/domain-migration")
+def admin_domain_migration():
+    """Migriert alle CustomerSettings von @bewerbungswandler.de auf @systemautomatik.com
+    und legt neue Mailgun-Routen an.
+    Erfordert ?key=ADMIN_KEY (gesetzt über ADMIN_DIAGNOSE_KEY in Env-Variablen)."""
+    from .auth import repariere_mailgun_route
+
+    expected_key = current_app.config.get("ADMIN_DIAGNOSE_KEY") or os.environ.get("ADMIN_DIAGNOSE_KEY")
+    if not expected_key or request.args.get("key") != expected_key:
+        return jsonify({"error": "Unauthorized – ?key=ADMIN_DIAGNOSE_KEY erforderlich"}), 401
+
+    old_domain = "bewerbungswandler.de"
+    new_domain = current_app.config.get("MAILGUN_DOMAIN", "systemautomatik.com")
+
+    migrated = []
+    skipped = []
+    errors = []
+
+    all_settings = CustomerSettings.query.all()
+    for s in all_settings:
+        if not s.eigene_email or old_domain not in s.eigene_email:
+            skipped.append({"user_id": s.user_id, "email": s.eigene_email, "reason": "kein alter Domain"})
+            continue
+
+        old_email = s.eigene_email
+        new_email = old_email.replace(f"@{old_domain}", f"@{new_domain}")
+        s.eigene_email = new_email
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            errors.append({"user_id": s.user_id, "old_email": old_email, "error": str(e)})
+            continue
+
+        success = repariere_mailgun_route(s.user_id, new_email)
+        migrated.append({
+            "user_id": s.user_id,
+            "old_email": old_email,
+            "new_email": new_email,
+            "route_ok": success,
+        })
+
+    return jsonify({
+        "new_domain": new_domain,
+        "migrated": migrated,
+        "skipped": skipped,
+        "errors": errors,
+        "summary": f"{len(migrated)} migriert, {len(skipped)} übersprungen, {len(errors)} Fehler",
+    })
 
 
 def _get_service_account_email() -> str:

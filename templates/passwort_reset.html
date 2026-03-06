@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Neues Passwort setzen – Bewerbercheck-Pro{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-logo">⚡ Bewerbercheck-Pro</div>
+        <h1>Neues Passwort setzen</h1>
+
+        <form method="POST">
+            <div class="form-group">
+                <label for="passwort">Neues Passwort</label>
+                <input type="password" id="passwort" name="passwort" required
+                       placeholder="Mindestens 8 Zeichen"
+                       class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">
+                Passwort speichern
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

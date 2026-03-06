@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Bewerbercheck-Pro – Bewerbungen automatisch auswerten{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Bewerbungen automatisch<br><span class="highlight">auswerten & sortieren</span></h1>
+    <p class="hero-subtitle">
+        Bewerber schicken ihren Lebenslauf an Ihre persönliche E-Mail-Adresse.<br>
+        Unsere KI übersetzt, extrahiert und bewertet – automatisch in Ihrem Google Sheet.
+    </p>
+    <div class="hero-cta">
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+            Kostenlos 14 Tage testen
+        </a>
+        <p class="hero-note">Keine Kreditkarte nötig &middot; Sofort starten</p>
+    </div>
+</section>
+
+<section class="features">
+    <div class="feature-grid">
+        <div class="feature-card">
+            <div class="feature-icon">📧</div>
+            <h3>Eigene Bewerbungs-E-Mail</h3>
+            <p>Sie erhalten eine persönliche Adresse wie <code>firma-abc@bewerbungswandler.de</code> – einfach in Ihre Stellenanzeige eintragen.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🤖</div>
+            <h3>KI-Auswertung</h3>
+            <p>Jede Bewerbung wird automatisch übersetzt, Daten werden extrahiert und ein Score 1–10 vergeben – mit Begründung.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Google Sheet</h3>
+            <p>Alle Bewerbungen landen automatisch in Ihrem Google Sheet – sortiert nach Score, jederzeit von überall abrufbar.</p>
+        </div>
+    </div>
+</section>
+
+<section class="how-it-works">
+    <h2>So einfach geht's</h2>
+    <ol class="steps">
+        <li>
+            <span class="step-number">1</span>
+            <div>
+                <strong>Konto erstellen</strong>
+                <p>In 60 Sekunden registriert. Sie erhalten sofort Ihre persönliche Bewerbungs-E-Mail-Adresse.</p>
+            </div>
+        </li>
+        <li>
+            <span class="step-number">2</span>
+            <div>
+                <strong>Google Sheet verknüpfen</strong>
+                <p>Fügen Sie unsere Service-E-Mail als Editor in Ihr Sheet ein und tragen Sie den Link ein.</p>
+            </div>
+        </li>
+        <li>
+            <span class="step-number">3</span>
+            <div>
+                <strong>E-Mail veröffentlichen</strong>
+                <p>Tragen Sie Ihre Bewerbungsadresse in Ihre Stellenanzeige ein – das war's.</p>
+            </div>
+        </li>
+        <li>
+            <span class="step-number">4</span>
+            <div>
+                <strong>Bewerbungen empfangen</strong>
+                <p>Bewerber schicken ihren Lebenslauf – Sie sehen automatisch bewertete Ergebnisse in Ihrem Sheet und Dashboard.</p>
+            </div>
+        </li>
+    </ol>
+</section>
+
+<section class="pricing">
+    <h2>Einfache Preisgestaltung</h2>
+    <div class="pricing-card">
+        <div class="pricing-header">
+            <h3>Professional</h3>
+            <div class="price">29€<span>/Monat</span></div>
+        </div>
+        <ul class="pricing-features">
+            <li>✓ Eigene Bewerbungs-E-Mail-Adresse</li>
+            <li>✓ KI-Auswertung & Scoring</li>
+            <li>✓ Google Sheets Integration</li>
+            <li>✓ Unbegrenzte Bewerbungen</li>
+            <li>✓ 14 Tage kostenlos testen</li>
+        </ul>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg btn-full">
+            Jetzt starten
+        </a>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ application.bewerber_name or 'Bewerbung' }} – Bewerbercheck-Pro{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline btn-sm">← Zurück</a>
+    <h1>{{ application.bewerber_name or 'Unbekannter Bewerber' }}</h1>
+    <span class="score-badge score-lg score-{{ 'high' if application.score >= 7 else ('mid' if application.score >= 4 else 'low') }}">
+        Score: {{ application.score or '–' }}/10
+    </span>
+</div>
+
+{% if application.score_begruendung %}
+<div class="card score-card">
+    <h3>KI-Bewertung</h3>
+    <p>{{ application.score_begruendung }}</p>
+</div>
+{% endif %}
+
+<div class="detail-grid">
+    <div class="detail-section">
+        <h3>Kontakt</h3>
+        <dl class="detail-list">
+            <dt>E-Mail</dt>
+            <dd>
+                {% if application.bewerber_email %}
+                <a href="mailto:{{ application.bewerber_email }}">{{ application.bewerber_email }}</a>
+                {% else %}Nicht angegeben{% endif %}
+            </dd>
+            <dt>Telefon</dt>
+            <dd>{{ application.telefon or 'Nicht angegeben' }}</dd>
+            <dt>Eingegangen am</dt>
+            <dd>{{ application.eingegangen_am.strftime('%d.%m.%Y um %H:%M Uhr') if application.eingegangen_am else '–' }}</dd>
+        </dl>
+    </div>
+
+    <div class="detail-section">
+        <h3>Qualifikation</h3>
+        <dl class="detail-list">
+            <dt>Ausbildung</dt>
+            <dd>{{ application.ausbildung or 'Nicht angegeben' }}</dd>
+            <dt>Berufserfahrung</dt>
+            <dd>
+                {% if application.berufserfahrung_jahre is not none %}
+                {{ application.berufserfahrung_jahre|int }} Jahre
+                {% else %}Nicht angegeben{% endif %}
+            </dd>
+            <dt>Sprachen</dt>
+            <dd>{{ application.sprachen or 'Nicht angegeben' }}</dd>
+        </dl>
+    </div>
+</div>
+
+{% if application.skills %}
+<div class="detail-section">
+    <h3>Skills & Fähigkeiten</h3>
+    <div class="skills-container">
+        {% for skill in application.skills.split(',') %}
+        <span class="skill-tag skill-tag-lg">{{ skill.strip() }}</span>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if application.uebersetzter_text %}
+<div class="detail-section">
+    <h3>Zusammenfassung (KI-übersetzt)</h3>
+    <div class="text-block">{{ application.uebersetzter_text }}</div>
+</div>
+{% endif %}
+
+{% if application.original_email_text %}
+<details class="original-text">
+    <summary>Originale Bewerbungs-E-Mail anzeigen</summary>
+    <div class="text-block">{{ application.original_email_text }}</div>
+</details>
+{% endif %}
+{% endblock %}

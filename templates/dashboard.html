@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Dashboard – Bewerbercheck-Pro{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Bewerbungsübersicht</h1>
+    {% if not current_user.abo_aktiv %}
+    <div class="trial-banner">
+        <span>🎯 Testphase aktiv</span>
+        <a href="{{ url_for('auth.stripe_checkout') }}" class="btn btn-primary btn-sm">
+            Jetzt abonnieren
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% if fehler_count > 0 %}
+<div class="alert alert-warning">
+    ⚠️ {{ fehler_count }} Bewerbung(en) konnten nicht verarbeitet werden.
+    Bitte prüfen Sie Ihre <a href="{{ url_for('settings_bp.index') }}">Einstellungen</a>.
+</div>
+{% endif %}
+
+{% if applications %}
+<div class="table-wrapper">
+    <table class="applications-table">
+        <thead>
+            <tr>
+                <th>Score</th>
+                <th>Name</th>
+                <th>E-Mail</th>
+                <th>Skills</th>
+                <th>Erfahrung</th>
+                <th>Eingegangen</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in applications %}
+            <tr class="application-row">
+                <td>
+                    <span class="score-badge score-{{ 'high' if app.score >= 7 else ('mid' if app.score >= 4 else 'low') }}">
+                        {{ app.score or '–' }}/10
+                    </span>
+                </td>
+                <td class="name-cell">{{ app.bewerber_name or '(Unbekannt)' }}</td>
+                <td>
+                    {% if app.bewerber_email %}
+                    <a href="mailto:{{ app.bewerber_email }}">{{ app.bewerber_email }}</a>
+                    {% else %}–{% endif %}
+                </td>
+                <td class="skills-cell">
+                    {% if app.skills %}
+                    {% for skill in app.skills.split(',')[:4] %}
+                    <span class="skill-tag">{{ skill.strip() }}</span>
+                    {% endfor %}
+                    {% if app.skills.split(',')|length > 4 %}
+                    <span class="skill-tag skill-more">+{{ app.skills.split(',')|length - 4 }}</span>
+                    {% endif %}
+                    {% else %}–{% endif %}
+                </td>
+                <td>
+                    {% if app.berufserfahrung_jahre is not none %}
+                    {{ app.berufserfahrung_jahre|int }} Jahre
+                    {% else %}–{% endif %}
+                </td>
+                <td class="date-cell">
+                    {{ app.eingegangen_am.strftime('%d.%m.%Y') if app.eingegangen_am else '–' }}
+                </td>
+                <td>
+                    <a href="{{ url_for('dashboard.detail', application_id=app.id) }}"
+                       class="btn btn-sm btn-outline">
+                        Details →
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">📬</div>
+    <h2>Noch keine Bewerbungen</h2>
+    <p>Tragen Sie Ihre Bewerbungs-E-Mail in Ihre Stellenanzeige ein.</p>
+    {% if current_user.settings %}
+    <div class="email-display">
+        <code>{{ current_user.settings.eigene_email }}</code>
+        <button onclick="navigator.clipboard.writeText('{{ current_user.settings.eigene_email }}')"
+                class="btn btn-sm btn-outline">
+            Kopieren
+        </button>
+    </div>
+    {% endif %}
+    <a href="{{ url_for('settings_bp.index') }}" class="btn btn-primary">
+        Einstellungen öffnen
+    </a>
+</div>
+{% endif %}
+{% endblock %}

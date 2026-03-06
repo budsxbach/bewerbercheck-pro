@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Registrieren – Bewerbercheck-Pro{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-logo">⚡ Bewerbercheck-Pro</div>
+        <h1>Konto erstellen</h1>
+        <p class="auth-subtitle">14 Tage kostenlos testen, keine Kreditkarte nötig.</p>
+
+        <form method="POST" action="{{ url_for('auth.register') }}">
+            <div class="form-group">
+                <label for="email">Ihre E-Mail-Adresse</label>
+                <input type="email" id="email" name="email" required
+                       placeholder="firma@beispiel.de"
+                       class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="passwort">Passwort</label>
+                <input type="password" id="passwort" name="passwort" required
+                       placeholder="Mindestens 8 Zeichen"
+                       class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="passwort2">Passwort bestätigen</label>
+                <input type="password" id="passwort2" name="passwort2" required
+                       placeholder="Passwort wiederholen"
+                       class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">
+                Kostenlos registrieren
+            </button>
+        </form>
+
+        <p class="auth-footer">
+            Bereits ein Konto?
+            <a href="{{ url_for('auth.login') }}">Jetzt einloggen</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

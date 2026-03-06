@@ -1,0 +1,19 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.DS_Store
+*.log
+instance/
+
+# Secrets & credentials
+Mailgun api.txt
+bewerbercheck-pro-*.json
+*.exe
+.claude/

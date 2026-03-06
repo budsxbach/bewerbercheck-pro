@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Einstellungen – Bewerbercheck-Pro{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Einstellungen</h1>
+</div>
+
+<!-- Bewerbungs-E-Mail -->
+<div class="card settings-card">
+    <h2>📧 Ihre Bewerbungs-E-Mail-Adresse</h2>
+    <p>Tragen Sie diese Adresse in Ihre Stellenanzeigen ein. Eingehende Bewerbungen werden automatisch verarbeitet.</p>
+    <div class="email-display-box">
+        <code id="bewerbungsEmail">{{ settings.eigene_email or 'Wird erstellt...' }}</code>
+        <button onclick="copyEmail()" class="btn btn-outline btn-sm">Kopieren</button>
+    </div>
+</div>
+
+<!-- Google Sheets -->
+<div class="card settings-card">
+    <h2>📊 Google Sheets Verknüpfung</h2>
+    <div class="setup-steps">
+        <p><strong>Schritt 1:</strong> Öffnen Sie Ihr Google Sheet und klicken Sie auf „Teilen".</p>
+        <p>
+            <strong>Schritt 2:</strong> Fügen Sie diese E-Mail-Adresse als <strong>Editor</strong> hinzu:
+        </p>
+        <div class="email-display-box">
+            <code>{{ service_account_email }}</code>
+            <button onclick="navigator.clipboard.writeText('{{ service_account_email }}')" class="btn btn-outline btn-sm">Kopieren</button>
+        </div>
+        <p><strong>Schritt 3:</strong> Fügen Sie die URL Ihres Sheets unten ein.</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('settings_bp.index') }}">
+        <div class="form-group">
+            <label for="sheets_url">Google Sheets URL</label>
+            <input type="url" id="sheets_url" name="sheets_url"
+                   value="{{ settings.sheets_url or '' }}"
+                   placeholder="https://docs.google.com/spreadsheets/d/..."
+                   class="form-control">
+            <small class="form-hint">Die URL aus der Adressleiste Ihres Browsers einfügen.</small>
+        </div>
+
+        <!-- Stellenbeschreibung -->
+        <div class="form-group">
+            <label for="stellenbeschreibung">Stellenbeschreibung</label>
+            <textarea id="stellenbeschreibung" name="stellenbeschreibung"
+                      rows="4" class="form-control"
+                      placeholder="Z.B.: Wir suchen einen Softwareentwickler mit Python-Kenntnissen für unser 10-köpfiges Team...">{{ settings.stellenbeschreibung or '' }}</textarea>
+            <small class="form-hint">Hilft der KI, Bewerber besser zu verstehen.</small>
+        </div>
+
+        <!-- Bewertungskriterien -->
+        <div class="form-group">
+            <label for="bewertungskriterien">Bewertungskriterien</label>
+            <textarea id="bewertungskriterien" name="bewertungskriterien"
+                      rows="4" class="form-control"
+                      placeholder="Z.B.: Mindestens 3 Jahre Erfahrung, Python Pflicht, Deutsch C1 erforderlich, Englisch von Vorteil">{{ settings.bewertungskriterien or '' }}</textarea>
+            <small class="form-hint">Je konkreter die Kriterien, desto genauer der Score.</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            Einstellungen speichern
+        </button>
+    </form>
+</div>
+
+<!-- Abo-Status -->
+<div class="card settings-card">
+    <h2>💳 Abo-Status</h2>
+    {% if current_user.abo_aktiv %}
+    <p class="status-active">✓ Ihr Abonnement ist aktiv.</p>
+    <a href="{{ url_for('auth.stripe_portal') }}" class="btn btn-outline">
+        Abo verwalten / kündigen
+    </a>
+    {% elif current_user.testphase_aktiv %}
+    <p class="status-trial">🎯 Testphase aktiv – 14 Tage kostenlos.</p>
+    <a href="{{ url_for('auth.stripe_checkout') }}" class="btn btn-primary">
+        Jetzt abonnieren – 29€/Monat
+    </a>
+    {% else %}
+    <p class="status-inactive">⚠️ Kein aktives Abonnement.</p>
+    <a href="{{ url_for('auth.stripe_checkout') }}" class="btn btn-primary">
+        Abonnement aktivieren
+    </a>
+    {% endif %}
+</div>
+
+<script>
+function copyEmail() {
+    const email = document.getElementById('bewerbungsEmail').textContent;
+    navigator.clipboard.writeText(email).then(() => {
+        alert('E-Mail-Adresse kopiert!');
+    });
+}
+</script>
+{% endblock %}

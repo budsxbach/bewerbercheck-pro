@@ -77,6 +77,8 @@ def admin_mailgun_diagnose():
         "mailgun_domain": domain,
         "api_base": api_base,
         "webhook_target": f"{app_url}/webhook/email",
+        "api_key_set": bool(api_key),
+        "api_key_prefix": (api_key[:8] + "...") if api_key else None,
         "routes": [],
         "users_without_route": [],
     }
@@ -108,15 +110,34 @@ def admin_mailgun_diagnose():
 
     # Kunden ohne funktionierende Route prüfen
     all_settings = CustomerSettings.query.all()
-    route_emails = {r["expression"] for r in result.get("routes", [])}
+    route_expressions = " ".join(r.get("expression", "") for r in result.get("routes", []))
     for s in all_settings:
-        if s.eigene_email and s.eigene_email not in " ".join(route_emails):
+        if s.eigene_email and s.eigene_email not in route_expressions:
             result["users_without_route"].append({
                 "user_id": s.user_id,
                 "email": s.eigene_email,
             })
 
     return jsonify(result)
+
+
+@settings_bp.route("/admin/fix-routes")
+def admin_fix_routes():
+    """Legt fehlende Mailgun-Routen für alle User neu an.
+    Erfordert ?key=ADMIN_KEY (gesetzt über ADMIN_DIAGNOSE_KEY in Env-Variablen)."""
+    expected_key = current_app.config.get("ADMIN_DIAGNOSE_KEY") or os.environ.get("ADMIN_DIAGNOSE_KEY")
+    if not expected_key or request.args.get("key") != expected_key:
+        return jsonify({"error": "Unauthorized – ?key=ADMIN_DIAGNOSE_KEY erforderlich"}), 401
+
+    from .auth import repariere_mailgun_route
+    results = []
+    for s in CustomerSettings.query.all():
+        if not s.eigene_email:
+            continue
+        success = repariere_mailgun_route(s.user_id, s.eigene_email)
+        results.append({"user_id": s.user_id, "email": s.eigene_email, "success": success})
+
+    return jsonify({"fixed": results, "count": len(results)})
 
 
 @settings_bp.route("/admin/domain-migration")

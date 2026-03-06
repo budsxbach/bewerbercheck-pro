@@ -85,7 +85,7 @@ def _create_mailgun_route(user_id: int, email_address: str):
         return
 
     try:
-        requests.post(
+        resp = requests.post(
             f"{api_base}/routes",
             auth=("api", api_key),
             data={
@@ -99,7 +99,14 @@ def _create_mailgun_route(user_id: int, email_address: str):
             },
             timeout=10,
         )
-        current_app.logger.info(f"Mailgun-Route angelegt: {email_address} → {app_url}/webhook/email")
+        if resp.status_code in (200, 201):
+            current_app.logger.info(
+                f"Mailgun-Route angelegt: {email_address} → {app_url}/webhook/email"
+            )
+        else:
+            current_app.logger.error(
+                f"Mailgun-Route FEHLER {resp.status_code}: {resp.text}"
+            )
     except Exception as e:
         current_app.logger.error(f"Mailgun Route Fehler: {e}")
 

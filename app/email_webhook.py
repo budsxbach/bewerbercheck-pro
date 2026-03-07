@@ -77,8 +77,12 @@ def email_webhook():
         if customer_settings.sheets_url:
             try:
                 schreibe_in_sheet(customer_settings.sheets_url, application)
+                application.sheets_geschrieben = True
+                db.session.commit()
             except Exception as e:
                 logger.error(f"Google Sheets Fehler für User {user.id}: {e}")
+                application.sheets_geschrieben = False
+                db.session.commit()
 
     except Exception as e:
         logger.error(f"KI-Verarbeitung Fehler für Application {application.id}: {e}")
@@ -92,8 +96,12 @@ def _verify_mailgun_signature(req) -> bool:
     """Prüft die HMAC-Signatur von Mailgun."""
     signing_key = current_app.config.get("MAILGUN_WEBHOOK_SIGNING_KEY")
     if not signing_key:
-        logger.warning("MAILGUN_WEBHOOK_SIGNING_KEY nicht gesetzt – Signaturprüfung übersprungen.")
-        return True  # In Entwicklung ohne Key durchlassen
+        app_url = current_app.config.get("APP_URL", "")
+        if "localhost" in app_url or "127.0.0.1" in app_url:
+            logger.warning("MAILGUN_WEBHOOK_SIGNING_KEY nicht gesetzt – Entwicklungsmodus, durchgelassen.")
+            return True
+        logger.error("MAILGUN_WEBHOOK_SIGNING_KEY fehlt in Produktion – Anfrage abgelehnt!")
+        return False
 
     timestamp = req.form.get("timestamp", "")
     token = req.form.get("token", "")

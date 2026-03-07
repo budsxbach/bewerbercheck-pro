@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, jsonify
 from flask_login import LoginManager
 from flask_mail import Mail
 
@@ -48,8 +48,30 @@ def create_app():
         from flask import render_template
         return render_template("landing.html")
 
+    # Health-Check
+    @app.route("/health")
+    def health():
+        try:
+            db.session.execute(db.text("SELECT 1"))
+            return jsonify({"status": "ok"}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "detail": str(e)}), 500
+
     # Datenbankinitialisierung
     with app.app_context():
         db.create_all()
+
+        # Einmalig: Bestehende User ohne testphase_enddatum bekommen 14 Tage ab erstellt_am
+        from datetime import timedelta
+        from .models import TESTPHASE_TAGE
+        users_ohne_enddatum = User.query.filter(
+            User.testphase_aktiv == True,
+            User.testphase_enddatum.is_(None),
+        ).all()
+        for u in users_ohne_enddatum:
+            u.testphase_enddatum = u.erstellt_am + timedelta(days=TESTPHASE_TAGE)
+        if users_ohne_enddatum:
+            db.session.commit()
+            app.logger.info(f"Testphase-Enddatum für {len(users_ohne_enddatum)} bestehende User gesetzt.")
 
     return app

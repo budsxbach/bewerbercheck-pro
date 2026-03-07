@@ -1,7 +1,12 @@
-from flask import Blueprint, render_template, redirect, url_for, abort
+import logging
+from flask import Blueprint, render_template, redirect, url_for, abort, flash
 from flask_login import login_required, current_user
 
-from .models import Application
+from .models import db, Application, CustomerSettings
+from .ai_processor import verarbeite_bewerbung
+from .sheets_writer import schreibe_in_sheet
+
+logger = logging.getLogger(__name__)
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -20,17 +25,18 @@ def index():
         .all()
     )
 
-    fehler_count = (
+    fehlerhafte = (
         Application.query
         .filter_by(user_id=current_user.id, verarbeitet=False)
         .filter(Application.fehler.isnot(None))
-        .count()
+        .order_by(Application.eingegangen_am.desc())
+        .all()
     )
 
     return render_template(
         "dashboard.html",
         applications=applications,
-        fehler_count=fehler_count,
+        fehlerhafte=fehlerhafte,
     )
 
 
@@ -41,3 +47,59 @@ def detail(application_id):
     if application.user_id != current_user.id:
         abort(403)
     return render_template("bewerbung_detail.html", application=application)
+
+
+@dashboard_bp.route("/bewerbung/<int:application_id>/retry", methods=["POST"])
+@login_required
+def retry(application_id):
+    application = Application.query.get_or_404(application_id)
+    if application.user_id != current_user.id:
+        abort(403)
+
+    if application.verarbeitet:
+        flash("Diese Bewerbung wurde bereits verarbeitet.", "info")
+        return redirect(url_for("dashboard.index"))
+
+    settings = CustomerSettings.query.filter_by(user_id=current_user.id).first()
+    if not settings:
+        flash("Bitte zuerst Einstellungen konfigurieren.", "warning")
+        return redirect(url_for("dashboard.index"))
+
+    try:
+        ergebnis = verarbeite_bewerbung(
+            email_text=application.original_email_text or "",
+            anhang_texte=[],
+            stellenbeschreibung=settings.stellenbeschreibung or "",
+            bewertungskriterien=settings.bewertungskriterien or "",
+        )
+
+        application.bewerber_name = ergebnis.get("name")
+        application.bewerber_email = ergebnis.get("email")
+        application.telefon = ergebnis.get("telefon")
+        application.skills = ergebnis.get("skills")
+        application.berufserfahrung_jahre = ergebnis.get("berufserfahrung_jahre")
+        application.ausbildung = ergebnis.get("ausbildung")
+        application.sprachen = ergebnis.get("sprachen")
+        application.score = ergebnis.get("score")
+        application.score_begruendung = ergebnis.get("score_begruendung")
+        application.uebersetzter_text = ergebnis.get("uebersetzter_text")
+        application.verarbeitet = True
+        application.fehler = None
+        db.session.commit()
+
+        # Sheets nachholen
+        if settings.sheets_url:
+            try:
+                schreibe_in_sheet(settings.sheets_url, application)
+                application.sheets_geschrieben = True
+                db.session.commit()
+            except Exception as e:
+                logger.error(f"Sheets Retry Fehler: {e}")
+
+        flash(f"Bewerbung von {application.bewerber_name or 'Unbekannt'} erfolgreich verarbeitet!", "success")
+    except Exception as e:
+        application.fehler = str(e)
+        db.session.commit()
+        flash(f"Erneute Verarbeitung fehlgeschlagen: {e}", "danger")
+
+    return redirect(url_for("dashboard.index"))

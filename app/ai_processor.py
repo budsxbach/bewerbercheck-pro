@@ -1,6 +1,7 @@
 import json
 import logging
 import anthropic
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,14 @@ Score-Skala (1-10):
 9-10: Ausgezeichnet (alle Anforderungen und mehr erfüllt)"""
 
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=30),
+    retry=retry_if_exception_type((anthropic.APIConnectionError, anthropic.RateLimitError, anthropic.InternalServerError)),
+    before_sleep=lambda retry_state: logger.warning(
+        f"KI-Verarbeitung fehlgeschlagen (Versuch {retry_state.attempt_number}), retry in {retry_state.next_action.sleep:.0f}s..."
+    ),
+)
 def verarbeite_bewerbung(
     email_text: str,
     anhang_texte: list[str],

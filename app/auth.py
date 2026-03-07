@@ -6,7 +6,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from flask_mail import Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 
-from .models import db, User, CustomerSettings
+from .models import db, User, CustomerSettings, TESTPHASE_TAGE
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -43,7 +43,11 @@ def register():
             flash("Diese E-Mail-Adresse ist bereits registriert.", "danger")
             return render_template("register.html")
 
-        user = User(email=email, testphase_aktiv=True)
+        user = User(
+            email=email,
+            testphase_aktiv=True,
+            testphase_enddatum=datetime.utcnow() + timedelta(days=TESTPHASE_TAGE),
+        )
         user.set_password(passwort)
         db.session.add(user)
         db.session.flush()  # ID erzeugen

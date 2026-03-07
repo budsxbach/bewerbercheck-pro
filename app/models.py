@@ -1,7 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+
+TESTPHASE_TAGE = 14
 
 db = SQLAlchemy()
 
@@ -16,6 +18,7 @@ class User(UserMixin, db.Model):
     stripe_subscription_id = db.Column(db.String(100), unique=True)
     abo_aktiv = db.Column(db.Boolean, default=False, nullable=False)
     testphase_aktiv = db.Column(db.Boolean, default=True, nullable=False)
+    testphase_enddatum = db.Column(db.DateTime)
     erstellt_am = db.Column(db.DateTime, default=datetime.utcnow)
     reset_token = db.Column(db.String(255))
     reset_token_ablauf = db.Column(db.DateTime)
@@ -31,8 +34,20 @@ class User(UserMixin, db.Model):
 
     @property
     def hat_zugang(self):
-        """Prüft ob Nutzer aktiven Zugang hat (Abo oder Testphase)."""
-        return self.abo_aktiv or self.testphase_aktiv
+        """Prüft ob Nutzer aktiven Zugang hat (Abo oder gültige Testphase)."""
+        if self.abo_aktiv:
+            return True
+        if self.testphase_aktiv and self.testphase_enddatum:
+            return datetime.utcnow() < self.testphase_enddatum
+        return False
+
+    @property
+    def testphase_tage_uebrig(self):
+        """Verbleibende Tage der Testphase (0 wenn abgelaufen)."""
+        if not self.testphase_enddatum:
+            return 0
+        delta = self.testphase_enddatum - datetime.utcnow()
+        return max(0, delta.days)
 
 
 class CustomerSettings(db.Model):
@@ -66,4 +81,5 @@ class Application(db.Model):
     uebersetzter_text = db.Column(db.Text)    # Ins Deutsche übersetzter Volltext
     eingegangen_am = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     verarbeitet = db.Column(db.Boolean, default=False)
+    sheets_geschrieben = db.Column(db.Boolean, default=False)
     fehler = db.Column(db.Text)               # Falls KI-Verarbeitung fehlschlug

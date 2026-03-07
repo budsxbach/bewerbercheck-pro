@@ -6,7 +6,7 @@
     <h1>Bewerbungsübersicht</h1>
     {% if not current_user.abo_aktiv %}
     <div class="trial-banner">
-        <span>🎯 Testphase aktiv</span>
+        <span>🎯 Testphase aktiv – noch {{ current_user.testphase_tage_uebrig }} Tage</span>
         <a href="{{ url_for('auth.stripe_checkout') }}" class="btn btn-primary btn-sm">
             Jetzt abonnieren
         </a>
@@ -14,10 +14,31 @@
     {% endif %}
 </div>
 
-{% if fehler_count > 0 %}
+{% if fehlerhafte %}
 <div class="alert alert-warning">
-    ⚠️ {{ fehler_count }} Bewerbung(en) konnten nicht verarbeitet werden.
-    Bitte prüfen Sie Ihre <a href="{{ url_for('settings_bp.index') }}">Einstellungen</a>.
+    <strong>⚠️ {{ fehlerhafte|length }} Bewerbung(en) konnten nicht verarbeitet werden:</strong>
+    <table class="applications-table" style="margin-top: 0.5rem;">
+        <thead>
+            <tr>
+                <th>Eingegangen</th>
+                <th>Fehler</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in fehlerhafte %}
+            <tr>
+                <td>{{ app.eingegangen_am.strftime('%d.%m.%Y %H:%M') if app.eingegangen_am else '–' }}</td>
+                <td style="font-size: 0.85em; color: #666;">{{ app.fehler[:100] }}{% if app.fehler|length > 100 %}...{% endif %}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('dashboard.retry', application_id=app.id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn-sm btn-primary">Erneut verarbeiten</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endif %}
 

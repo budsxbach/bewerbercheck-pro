@@ -8,6 +8,17 @@ mail = Mail()
 login_manager = LoginManager()
 
 
+def _add_column_if_missing(db, table, column, col_type):
+    """Fügt eine Spalte hinzu, falls sie noch nicht existiert (ALTER TABLE)."""
+    try:
+        db.session.execute(db.text(
+            f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"
+        ))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()  # Spalte existiert bereits
+
+
 def create_app():
     app = Flask(__name__, template_folder="../templates", static_folder="../static")
     app.config.from_object("config.Config")
@@ -60,6 +71,10 @@ def create_app():
     # Datenbankinitialisierung
     with app.app_context():
         db.create_all()
+
+        # Neue Spalten zu bestehenden Tabellen hinzufügen (db.create_all() macht das nicht)
+        _add_column_if_missing(db, "users", "testphase_enddatum", "TIMESTAMP")
+        _add_column_if_missing(db, "applications", "sheets_geschrieben", "BOOLEAN DEFAULT FALSE")
 
         # Einmalig: Bestehende User ohne testphase_enddatum bekommen 14 Tage ab erstellt_am
         from datetime import timedelta

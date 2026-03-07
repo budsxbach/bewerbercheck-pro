@@ -40,7 +40,7 @@ class CustomerSettings(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True)
-    eigene_email = db.Column(db.String(255), unique=True)  # firma-abc123@bewerbungswandler.de
+    eigene_email = db.Column(db.String(255), unique=True)  # firma-abc123@systemautomatik.com
     email_token = db.Column(db.String(20), unique=True)    # abc123 Teil der E-Mail
     sheets_url = db.Column(db.Text)
     stellenbeschreibung = db.Column(db.Text)

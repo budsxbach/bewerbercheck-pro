@@ -72,8 +72,9 @@ def register():
     return render_template("register.html")
 
 
-def _create_mailgun_route(user_id: int, email_address: str):
-    """Legt Mailgun-Route an, die eingehende E-Mails an unseren Webhook weiterleitet."""
+def _create_mailgun_route(user_id: int, email_address: str) -> bool:
+    """Legt Mailgun-Route an, die eingehende E-Mails an unseren Webhook weiterleitet.
+    Gibt True zurück, wenn die Route erfolgreich angelegt wurde."""
     import requests
 
     api_key = current_app.config.get("MAILGUN_API_KEY")
@@ -82,7 +83,7 @@ def _create_mailgun_route(user_id: int, email_address: str):
 
     if not api_key:
         current_app.logger.warning("MAILGUN_API_KEY nicht gesetzt – Route nicht angelegt.")
-        return
+        return False
 
     try:
         resp = requests.post(
@@ -103,12 +104,15 @@ def _create_mailgun_route(user_id: int, email_address: str):
             current_app.logger.info(
                 f"Mailgun-Route angelegt: {email_address} → {app_url}/webhook/email"
             )
+            return True
         else:
             current_app.logger.error(
                 f"Mailgun-Route FEHLER {resp.status_code}: {resp.text}"
             )
+            return False
     except Exception as e:
         current_app.logger.error(f"Mailgun Route Fehler: {e}")
+        return False
 
 
 def repariere_mailgun_route(user_id: int, email_address: str) -> bool:
@@ -147,8 +151,7 @@ def repariere_mailgun_route(user_id: int, email_address: str) -> bool:
                 current_app.logger.info(f"Alte Mailgun-Route gelöscht: {route_id}")
 
         # Neue Route mit korrekter APP_URL anlegen
-        _create_mailgun_route(user_id, email_address)
-        return True
+        return _create_mailgun_route(user_id, email_address)
 
     except Exception as e:
         current_app.logger.error(f"Mailgun Route Reparatur Fehler: {e}")

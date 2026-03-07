@@ -11,7 +11,7 @@ Geschätzte Zeit: ca. 90 Minuten beim ersten Mal.
 
 1. Gehen Sie zu **mailgun.com** → „Sign Up Free"
 2. E-Mail bestätigen, dann im Dashboard:
-   - „Add a Domain" → Ihren eigenen Domain-Namen eingeben (z.B. `bewerbungswandler.de`)
+   - „Add a Domain" → Ihren eigenen Domain-Namen eingeben (z.B. `systemautomatik.com`)
    - Alternativ: Mailgun-Sandbox-Domain für Tests verwenden
 3. Im Domain-Dashboard:
    - Kopieren Sie den **API Key** (beginnt mit `key-`)
@@ -69,7 +69,7 @@ Geschätzte Zeit: ca. 90 Minuten beim ersten Mal.
      git init
      git add .
      git commit -m "Initial commit"
-     git remote add origin https://github.com/IHR-NAME/bewerbercheck-pro.git
+     git remote add origin https://github.com/budsxbach/bewerbercheck-pro.git
      git push -u origin main
      ```
 
@@ -94,7 +94,7 @@ Geschätzte Zeit: ca. 90 Minuten beim ersten Mal.
 | `DATABASE_URL` | Von Railway PostgreSQL kopiert |
 | `SECRET_KEY` | Zufälliger langer String (z.B. 40 Zeichen) |
 | `MAILGUN_API_KEY` | Von Mailgun |
-| `MAILGUN_DOMAIN` | Ihre Domain (z.B. bewerbungswandler.de) |
+| `MAILGUN_DOMAIN` | Ihre Domain (z.B. systemautomatik.com) |
 | `MAILGUN_WEBHOOK_SIGNING_KEY` | Von Mailgun |
 | `ANTHROPIC_API_KEY` | Von Anthropic |
 | `STRIPE_PUBLISHABLE_KEY` | Von Stripe |
@@ -105,10 +105,11 @@ Geschätzte Zeit: ca. 90 Minuten beim ersten Mal.
 | `MAIL_USERNAME` | Ihre Mailgun SMTP E-Mail |
 | `MAIL_PASSWORD` | Mailgun SMTP-Passwort |
 | `APP_URL` | https://ihre-domain.de |
+| `ADMIN_DIAGNOSE_KEY` | Beliebiger geheimer String (z.B. 20 Zeichen) |
 
 ### Domain verknüpfen:
 8. Railway → Ihre App → „Settings" → „Domains" → „Add Custom Domain"
-9. Ihre Domain eingeben (z.B. `app.bewerbungswandler.de`)
+9. Ihre Domain eingeben (z.B. `app.systemautomatik.com`)
 10. Den angezeigten CNAME-Eintrag bei Hostinger eintragen:
     - Hostinger → Domains → DNS-Einstellungen
     - CNAME: `app` → Wert von Railway
@@ -139,7 +140,7 @@ App erreichbar unter: http://localhost
 
 ### Funktionstest:
 1. **Registrierung**: http://ihre-domain.de → Registrieren → Einstellungsseite erscheint
-2. **E-Mail-Adresse**: Wird auf Einstellungsseite angezeigt (z.B. `firma-abc123@bewerbungswandler.de`)
+2. **E-Mail-Adresse**: Wird auf Einstellungsseite angezeigt (z.B. `firma-abc123@systemautomatik.com`)
 3. **Google Sheet**: Neues Sheet erstellen → Service-Account-E-Mail als Editor hinzufügen → URL eintragen
 4. **Testbewerbung senden**:
    - E-Mail mit PDF-Anhang an die angezeigte Bewerbungsadresse schicken
@@ -171,6 +172,66 @@ App erreichbar unter: http://localhost
 
 **Google Sheets schreibt nicht**: Service-Account-E-Mail als Editor im Sheet hinzugefügt?
 
-**Keine E-Mails ankommen**: Mailgun-Domain verifiziert? MX-Einträge gesetzt?
+**Keine E-Mails ankommen**: Siehe Abschnitt unten – DNS konfigurieren und Route prüfen.
 
 **Score erscheint nicht**: Anthropic API Key korrekt? Guthaben vorhanden?
+
+---
+
+## Anhang: E-Mail-Empfang reparieren (DNS-Setup)
+
+Falls keine Bewerbungen ankommen, müssen DNS-Einträge bei Ihrem Domain-Anbieter gesetzt werden.
+
+### Schritt 1: DNS-Werte aus Mailgun holen
+
+1. Gehen Sie zu **app.mailgun.com** → „Sending" → „Domains" → `systemautomatik.com`
+2. Klicken Sie auf „DNS Records" oder „Verify Domain"
+3. Notieren Sie alle angezeigten DNS-Einträge
+
+### Schritt 2: DNS bei Hostinger eintragen
+
+1. Gehen Sie zu **hpanel.hostinger.com** → Domains → `systemautomatik.com` → „DNS / Nameserver"
+2. Folgende Einträge hinzufügen (genaue Werte aus Mailgun-Dashboard kopieren!):
+
+**MX Records (für E-Mail-Empfang):**
+```
+Typ: MX   Name: @   Wert: mxa.mailgun.org   Priorität: 10
+Typ: MX   Name: @   Wert: mxb.mailgun.org   Priorität: 10
+```
+
+**SPF (TXT Record, Spam-Schutz):**
+```
+Typ: TXT   Name: @   Wert: v=spf1 include:mailgun.org ~all
+```
+
+**DKIM (TXT Record, Signaturvalidierung — genauen langen Wert aus Mailgun kopieren):**
+```
+Typ: TXT   Name: krs._domainkey   Wert: (langer Schlüssel aus Mailgun)
+```
+
+⚠️ Immer die exakten Werte aus Mailgun kopieren, nie raten!
+
+### Schritt 3: Mailgun-Domain verifizieren
+
+1. Mailgun → Domain-Settings → „Verify DNS Records"
+2. Nach 5–30 Minuten alle Haken grün? → Domain bereit
+
+### Schritt 4: Mailgun-Route prüfen und reparieren
+
+Falls die Route mit einer alten App-URL angelegt wurde:
+
+1. Railway → Variables → `APP_URL` = `https://web-production-72977.up.railway.app`
+2. In den **Einstellungen** der App → „E-Mail-Empfang funktioniert nicht?" ausklappen
+3. „Route neu erstellen" klicken → Route wird automatisch korrigiert
+
+**Oder per Admin-Diagnose-URL:**
+```
+https://ihre-domain.de/admin/mailgun-diagnose?key=IHR_ADMIN_DIAGNOSE_KEY
+```
+Zeigt alle Routen und ob `webhook_ok: true` gesetzt ist.
+
+### Schritt 5: Testen
+
+1. Test-E-Mail mit PDF-Anhang an `firma-xxx@systemautomatik.com` schicken
+2. Nach 30 Sekunden → Dashboard → Bewerbung mit Score erscheint?
+3. Google Sheet → neue Zeile?

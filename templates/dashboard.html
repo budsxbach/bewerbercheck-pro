@@ -6,9 +6,9 @@
     <h1>Bewerbungsübersicht</h1>
     {% if not current_user.abo_aktiv %}
     <div class="trial-banner">
-        <span>🎯 Testphase aktiv – noch {{ current_user.testphase_tage_uebrig }} Tage</span>
+        <span>🎯 Testphase – noch {{ current_user.testphase_tage_uebrig }} Tage</span>
         <a href="{{ url_for('auth.stripe_checkout') }}" class="btn btn-primary btn-sm">
-            Jetzt abonnieren
+            Upgrade
         </a>
     </div>
     {% endif %}
@@ -17,7 +17,7 @@
 {% if fehlerhafte %}
 <div class="alert alert-warning">
     <strong>⚠️ {{ fehlerhafte|length }} Bewerbung(en) konnten nicht verarbeitet werden:</strong>
-    <table class="applications-table" style="margin-top: 0.5rem;">
+    <table class="applications-table" style="margin-top: 0.75rem;">
         <thead>
             <tr>
                 <th>Eingegangen</th>
@@ -29,7 +29,7 @@
             {% for app in fehlerhafte %}
             <tr>
                 <td>{{ app.eingegangen_am.strftime('%d.%m.%Y %H:%M') if app.eingegangen_am else '–' }}</td>
-                <td style="font-size: 0.85em; color: #666;">{{ app.fehler[:100] }}{% if app.fehler|length > 100 %}...{% endif %}</td>
+                <td style="font-size: 0.82em; color: var(--gray-600);">{{ app.fehler[:100] }}{% if app.fehler|length > 100 %}...{% endif %}</td>
                 <td>
                     <form method="POST" action="{{ url_for('dashboard.retry', application_id=app.id) }}" style="display:inline;">
                         <button type="submit" class="btn btn-sm btn-primary">Erneut verarbeiten</button>
@@ -72,17 +72,17 @@
                 </td>
                 <td class="skills-cell">
                     {% if app.skills %}
-                    {% for skill in app.skills.split(',')[:4] %}
+                    {% for skill in app.skills.split(',')[:3] %}
                     <span class="skill-tag">{{ skill.strip() }}</span>
                     {% endfor %}
-                    {% if app.skills.split(',')|length > 4 %}
-                    <span class="skill-tag skill-more">+{{ app.skills.split(',')|length - 4 }}</span>
+                    {% if app.skills.split(',')|length > 3 %}
+                    <span class="skill-tag skill-more">+{{ app.skills.split(',')|length - 3 }}</span>
                     {% endif %}
                     {% else %}–{% endif %}
                 </td>
                 <td>
                     {% if app.berufserfahrung_jahre is not none %}
-                    {{ app.berufserfahrung_jahre|int }} Jahre
+                    {{ app.berufserfahrung_jahre|int }} J.
                     {% else %}–{% endif %}
                 </td>
                 <td class="date-cell">
@@ -91,7 +91,7 @@
                 <td>
                     <a href="{{ url_for('dashboard.detail', application_id=app.id) }}"
                        class="btn btn-sm btn-outline">
-                        Details →
+                        Details
                     </a>
                 </td>
             </tr>
@@ -106,9 +106,8 @@
     <p>Tragen Sie Ihre Bewerbungs-E-Mail in Ihre Stellenanzeige ein.</p>
     {% if current_user.settings %}
     <div class="email-display">
-        <code>{{ current_user.settings.eigene_email }}</code>
-        <button onclick="navigator.clipboard.writeText('{{ current_user.settings.eigene_email }}')"
-                class="btn btn-sm btn-outline">
+        <code style="font-size: 1rem; color: var(--primary-dark); font-weight: 600; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;">{{ current_user.settings.eigene_email }}</code>
+        <button onclick="copyEmail()" class="btn btn-sm btn-outline" id="copyBtn">
             Kopieren
         </button>
     </div>
@@ -117,5 +116,19 @@
         Einstellungen öffnen
     </a>
 </div>
+
+<script>
+function copyEmail() {
+    navigator.clipboard.writeText('{{ current_user.settings.eigene_email }}').then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = 'Kopiert!';
+        btn.classList.add('btn-copied');
+        setTimeout(() => {
+            btn.textContent = 'Kopieren';
+            btn.classList.remove('btn-copied');
+        }, 2000);
+    });
+}
+</script>
 {% endif %}
 {% endblock %}

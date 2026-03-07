@@ -9,18 +9,22 @@
 <!-- Bewerbungs-E-Mail -->
 <div class="card settings-card">
     <h2>📧 Ihre Bewerbungs-E-Mail-Adresse</h2>
-    <p>Tragen Sie diese Adresse in Ihre Stellenanzeigen ein. Eingehende Bewerbungen werden automatisch verarbeitet.</p>
+    <p style="color: var(--gray-500); font-size: .9rem; margin-bottom: .5rem;">
+        Tragen Sie diese Adresse in Ihre Stellenanzeigen ein. Eingehende Bewerbungen werden automatisch verarbeitet.
+    </p>
     <div class="email-display-box">
         <code id="bewerbungsEmail">{{ settings.eigene_email or 'Wird erstellt...' }}</code>
-        <button onclick="copyEmail()" class="btn btn-outline btn-sm">Kopieren</button>
+        <button onclick="copyToClipboard('bewerbungsEmail', this)" class="btn btn-outline btn-sm">Kopieren</button>
     </div>
     <details style="margin-top:1rem;">
-        <summary style="cursor:pointer; color:#666; font-size:0.9em;">⚙️ E-Mail-Empfang funktioniert nicht?</summary>
-        <div style="margin-top:0.75rem; padding:0.75rem; background:#fff8e1; border-radius:6px; border:1px solid #ffe082;">
-            <p style="margin:0 0 0.5rem; font-size:0.9em;">Falls keine Bewerbungen ankommen, kann die Weiterleitungsregel neu erstellt werden:</p>
+        <summary style="cursor:pointer; color: var(--gray-400); font-size:0.85em; font-weight: 500;">
+            E-Mail-Empfang funktioniert nicht?
+        </summary>
+        <div style="margin-top:0.75rem; padding:1rem; background: var(--warning-light); border-radius: var(--radius-sm); border:1px solid rgba(217,119,6,.15);">
+            <p style="margin:0 0 0.75rem; font-size:0.9em; color: var(--gray-600);">Falls keine Bewerbungen ankommen, kann die Weiterleitungsregel neu erstellt werden:</p>
             <form method="POST" action="{{ url_for('settings_bp.route_reparieren') }}"
                   onsubmit="return confirm('Mailgun-Route neu erstellen?');">
-                <button type="submit" class="btn btn-outline btn-sm">🔧 Route neu erstellen</button>
+                <button type="submit" class="btn btn-outline btn-sm">Route neu erstellen</button>
             </form>
         </div>
     </details>
@@ -35,8 +39,8 @@
             <strong>Schritt 2:</strong> Fügen Sie diese E-Mail-Adresse als <strong>Editor</strong> hinzu:
         </p>
         <div class="email-display-box">
-            <code>{{ service_account_email }}</code>
-            <button onclick="navigator.clipboard.writeText('{{ service_account_email }}')" class="btn btn-outline btn-sm">Kopieren</button>
+            <code id="serviceEmail">{{ service_account_email }}</code>
+            <button onclick="copyToClipboard('serviceEmail', this)" class="btn btn-outline btn-sm">Kopieren</button>
         </div>
         <p><strong>Schritt 3:</strong> Fügen Sie die URL Ihres Sheets unten ein.</p>
     </div>
@@ -51,7 +55,6 @@
             <small class="form-hint">Die URL aus der Adressleiste Ihres Browsers einfügen.</small>
         </div>
 
-        <!-- Stellenbeschreibung -->
         <div class="form-group">
             <label for="stellenbeschreibung">Stellenbeschreibung</label>
             <textarea id="stellenbeschreibung" name="stellenbeschreibung"
@@ -60,7 +63,6 @@
             <small class="form-hint">Hilft der KI, Bewerber besser zu verstehen.</small>
         </div>
 
-        <!-- Bewertungskriterien -->
         <div class="form-group">
             <label for="bewertungskriterien">Bewertungskriterien</label>
             <textarea id="bewertungskriterien" name="bewertungskriterien"
@@ -83,13 +85,13 @@
     <a href="{{ url_for('auth.stripe_portal') }}" class="btn btn-outline">
         Abo verwalten / kündigen
     </a>
-    {% elif current_user.testphase_aktiv %}
-    <p class="status-trial">🎯 Testphase aktiv – 14 Tage kostenlos.</p>
+    {% elif current_user.hat_zugang %}
+    <p class="status-trial">🎯 Testphase aktiv – noch {{ current_user.testphase_tage_uebrig }} Tage.</p>
     <a href="{{ url_for('auth.stripe_checkout') }}" class="btn btn-primary">
         Jetzt abonnieren – 29€/Monat
     </a>
     {% else %}
-    <p class="status-inactive">⚠️ Kein aktives Abonnement.</p>
+    <p class="status-inactive">⚠️ Kein aktives Abonnement. Ihre Testphase ist abgelaufen.</p>
     <a href="{{ url_for('auth.stripe_checkout') }}" class="btn btn-primary">
         Abonnement aktivieren
     </a>
@@ -97,10 +99,16 @@
 </div>
 
 <script>
-function copyEmail() {
-    const email = document.getElementById('bewerbungsEmail').textContent;
-    navigator.clipboard.writeText(email).then(() => {
-        alert('E-Mail-Adresse kopiert!');
+function copyToClipboard(elementId, btn) {
+    const text = document.getElementById(elementId).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const original = btn.textContent;
+        btn.textContent = 'Kopiert!';
+        btn.classList.add('btn-copied');
+        setTimeout(() => {
+            btn.textContent = original;
+            btn.classList.remove('btn-copied');
+        }, 2000);
     });
 }
 </script>

@@ -6,18 +6,19 @@
     <div class="auth-card">
         <div class="auth-logo">⚡ Bewerbercheck-Pro</div>
         <h1>Willkommen zurück</h1>
+        <p class="auth-subtitle">Melden Sie sich in Ihrem Konto an.</p>
 
         <form method="POST" action="{{ url_for('auth.login') }}">
             <div class="form-group">
                 <label for="email">E-Mail-Adresse</label>
                 <input type="email" id="email" name="email" required
                        placeholder="ihre@email.de"
-                       class="form-control">
+                       class="form-control" autocomplete="email">
             </div>
             <div class="form-group">
                 <label for="passwort">Passwort</label>
                 <input type="password" id="passwort" name="passwort" required
-                       class="form-control">
+                       class="form-control" autocomplete="current-password">
             </div>
             <button type="submit" class="btn btn-primary btn-full">
                 Einloggen
@@ -29,7 +30,7 @@
         </p>
         <p class="auth-footer">
             Noch kein Konto?
-            <a href="{{ url_for('auth.register') }}">Kostenlos registrieren</a>
+            <a href="{{ url_for('auth.register') }}"><strong>Kostenlos registrieren</strong></a>
         </p>
     </div>
 </div>

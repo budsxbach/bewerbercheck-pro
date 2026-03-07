@@ -123,21 +123,22 @@ def admin_mailgun_diagnose():
 
 @settings_bp.route("/admin/fix-routes")
 def admin_fix_routes():
-    """Legt fehlende Mailgun-Routen für alle User neu an.
+    """Erstellt eine Catch-All-Route für alle E-Mails an @domain.
     Erfordert ?key=ADMIN_KEY (gesetzt über ADMIN_DIAGNOSE_KEY in Env-Variablen)."""
     expected_key = current_app.config.get("ADMIN_DIAGNOSE_KEY") or os.environ.get("ADMIN_DIAGNOSE_KEY")
     if not expected_key or request.args.get("key") != expected_key:
         return jsonify({"error": "Unauthorized – ?key=ADMIN_DIAGNOSE_KEY erforderlich"}), 401
 
-    from .auth import repariere_mailgun_route
-    results = []
-    for s in CustomerSettings.query.all():
-        if not s.eigene_email:
-            continue
-        success = repariere_mailgun_route(s.user_id, s.eigene_email)
-        results.append({"user_id": s.user_id, "email": s.eigene_email, "success": success})
+    from .auth import _ensure_catchall_route
+    result = _ensure_catchall_route()
+    domain = current_app.config.get("MAILGUN_DOMAIN", "systemautomatik.com")
 
-    return jsonify({"fixed": results, "count": len(results)})
+    return jsonify({
+        "strategy": "catch-all",
+        "domain": domain,
+        "result": result,
+        "info": f"Eine Route für *@{domain} – alle User werden über den Webhook identifiziert.",
+    })
 
 
 @settings_bp.route("/admin/domain-migration")

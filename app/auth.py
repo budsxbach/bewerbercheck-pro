@@ -72,64 +72,41 @@ def register():
     return render_template("register.html")
 
 
-def _create_mailgun_route(user_id: int, email_address: str) -> bool:
-    """Legt Mailgun-Route an, die eingehende E-Mails an unseren Webhook weiterleitet.
-    Gibt True zurück, wenn die Route erfolgreich angelegt wurde."""
+def _create_mailgun_route(user_id: int, email_address: str):
+    """Legacy: Einzelne Route pro User. Wird bei Registrierung aufgerufen,
+    prüft aber zuerst, ob bereits eine Catch-All-Route existiert."""
     import requests
 
     api_key = current_app.config.get("MAILGUN_API_KEY")
     api_base = current_app.config.get("MAILGUN_API_BASE", "https://api.eu.mailgun.net/v3")
-    app_url = current_app.config.get("APP_URL", "http://localhost:5000")
 
     if not api_key:
         current_app.logger.warning("MAILGUN_API_KEY nicht gesetzt – Route nicht angelegt.")
-        return False
+        return
 
-    try:
-        resp = requests.post(
-            f"{api_base}/routes",
-            auth=("api", api_key),
-            data={
-                "priority": 1,
-                "description": f"BewerberCheck Route für User {user_id}",
-                "expression": f"match_recipient('{email_address}')",
-                "action": [
-                    f"forward('{app_url}/webhook/email')",
-                    "stop()",
-                ],
-            },
-            timeout=10,
+    # Prüfe ob bereits eine Catch-All-Route existiert
+    if _catchall_route_exists():
+        current_app.logger.info(
+            f"Catch-All-Route existiert bereits – keine einzelne Route für {email_address} nötig."
         )
-        if resp.status_code in (200, 201):
-            current_app.logger.info(
-                f"Mailgun-Route angelegt: {email_address} → {app_url}/webhook/email"
-            )
-            return True
-        else:
-            current_app.logger.error(
-                f"Mailgun-Route FEHLER {resp.status_code}: {resp.text}"
-            )
-            return False
-    except Exception as e:
-        current_app.logger.error(f"Mailgun Route Fehler: {e}")
-        return False
+        return
+
+    # Fallback: Einzelne Route anlegen (falls kein Catch-All)
+    _ensure_catchall_route()
 
 
-def repariere_mailgun_route(user_id: int, email_address: str) -> bool:
-    """Löscht alte Mailgun-Routen für die Adresse und legt eine neue mit der aktuellen APP_URL an.
-    Gibt True zurück, wenn erfolgreich."""
+def _catchall_route_exists() -> bool:
+    """Prüft ob eine Catch-All-Route für die Mailgun-Domain existiert."""
     import requests
 
     api_key = current_app.config.get("MAILGUN_API_KEY")
     api_base = current_app.config.get("MAILGUN_API_BASE", "https://api.eu.mailgun.net/v3")
-    app_url = current_app.config.get("APP_URL", "http://localhost:5000")
+    domain = current_app.config.get("MAILGUN_DOMAIN", "systemautomatik.com")
 
     if not api_key:
-        current_app.logger.warning("MAILGUN_API_KEY nicht gesetzt – Route nicht repariert.")
         return False
 
     try:
-        # Alle existierenden Routen holen und passende löschen
         resp = requests.get(
             f"{api_base}/routes",
             auth=("api", api_key),
@@ -141,21 +118,81 @@ def repariere_mailgun_route(user_id: int, email_address: str) -> bool:
 
         for route in routes:
             expression = route.get("expression", "")
-            if email_address in expression:
+            if f"@{domain}" in expression and ("catch_all" in expression or "match_header" not in expression):
+                return True
+        return False
+    except Exception:
+        return False
+
+
+def _ensure_catchall_route() -> dict:
+    """Erstellt eine Catch-All-Route für alle E-Mails an @domain.
+    Gibt dict mit 'ok' und optional 'error' zurück."""
+    import requests
+
+    api_key = current_app.config.get("MAILGUN_API_KEY")
+    api_base = current_app.config.get("MAILGUN_API_BASE", "https://api.eu.mailgun.net/v3")
+    app_url = current_app.config.get("APP_URL", "http://localhost:5000")
+    domain = current_app.config.get("MAILGUN_DOMAIN", "systemautomatik.com")
+
+    if not api_key:
+        return {"ok": False, "error": "MAILGUN_API_KEY nicht gesetzt"}
+
+    try:
+        # Alle alten Routen für diese Domain löschen
+        resp = requests.get(
+            f"{api_base}/routes",
+            auth=("api", api_key),
+            params={"limit": 100},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        routes = resp.json().get("items", [])
+
+        for route in routes:
+            expression = route.get("expression", "")
+            if f"@{domain}" in expression or domain in expression:
                 route_id = route["id"]
                 requests.delete(
                     f"{api_base}/routes/{route_id}",
                     auth=("api", api_key),
                     timeout=10,
                 )
-                current_app.logger.info(f"Alte Mailgun-Route gelöscht: {route_id}")
+                current_app.logger.info(f"Alte Route gelöscht: {route_id}")
 
-        # Neue Route mit korrekter APP_URL anlegen
-        return _create_mailgun_route(user_id, email_address)
-
+        # Eine einzige Catch-All-Route anlegen
+        resp = requests.post(
+            f"{api_base}/routes",
+            auth=("api", api_key),
+            data={
+                "priority": 0,
+                "description": f"BewerberCheck Catch-All für @{domain}",
+                "expression": f"match_recipient('.*@{domain}')",
+                "action": [
+                    f"forward('{app_url}/webhook/email')",
+                    "stop()",
+                ],
+            },
+            timeout=10,
+        )
+        if resp.status_code in (200, 201):
+            current_app.logger.info(
+                f"Catch-All-Route angelegt: *@{domain} → {app_url}/webhook/email"
+            )
+            return {"ok": True}
+        else:
+            error_msg = f"HTTP {resp.status_code}: {resp.text}"
+            current_app.logger.error(f"Catch-All-Route FEHLER: {error_msg}")
+            return {"ok": False, "error": error_msg}
     except Exception as e:
-        current_app.logger.error(f"Mailgun Route Reparatur Fehler: {e}")
-        return False
+        current_app.logger.error(f"Catch-All-Route Fehler: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+def repariere_mailgun_route(user_id: int, email_address: str) -> dict:
+    """Stellt sicher, dass eine Catch-All-Route existiert.
+    Gibt dict mit 'ok' (bool) und optional 'error' (str) zurück."""
+    return _ensure_catchall_route()
 
 
 # ─── Login / Logout ───────────────────────────────────────────────────────────

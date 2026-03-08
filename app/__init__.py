@@ -129,14 +129,14 @@ Disallow: /admin/
 Disallow: /abo/
 
 Sitemap: {base}/sitemap.xml
-""".format(base=app.config.get("APP_URL", "https://bewerbercheck-pro.de"))
+""".format(base=app.config.get("APP_URL", "https://bewerbercheck-pro.systemautomatik.com"))
         response = make_response(content)
         response.headers["Content-Type"] = "text/plain"
         return response
 
     @app.route("/sitemap.xml")
     def sitemap_xml():
-        base = app.config.get("APP_URL", "https://bewerbercheck-pro.de")
+        base = app.config.get("APP_URL", "https://bewerbercheck-pro.systemautomatik.com")
         urls = [
             (f"{base}/start", "weekly", "1.0"),
             (f"{base}/impressum", "monthly", "0.3"),

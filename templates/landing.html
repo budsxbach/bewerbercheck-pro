@@ -3,6 +3,7 @@
 
 {% block content %}
 <section class="hero">
+    <div class="hero-badge">Neu: KI-gestützte Bewerbungsanalyse</div>
     <h1>Bewerbungen automatisch<br><span class="highlight">auswerten & sortieren</span></h1>
     <p class="hero-subtitle">
         Bewerber schicken ihren Lebenslauf an Ihre persönliche E-Mail-Adresse.
@@ -15,6 +16,22 @@
         <p class="hero-note">Keine Kreditkarte nötig &middot; In 60 Sekunden startklar</p>
     </div>
 </section>
+
+<!-- Trust-Leiste -->
+<div class="trust-bar">
+    <div class="trust-item">
+        <strong>E-Mail → KI → Sheet</strong>
+        <span>Vollautomatisch</span>
+    </div>
+    <div class="trust-item">
+        <strong>Score 1–10</strong>
+        <span>Mit Begründung</span>
+    </div>
+    <div class="trust-item">
+        <strong>Mehrsprachig</strong>
+        <span>Automatisch übersetzt</span>
+    </div>
+</div>
 
 <section class="features">
     <div class="feature-grid">
@@ -87,6 +104,25 @@
         <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg btn-full">
             Jetzt starten
         </a>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq">
+    <h2>Häufige Fragen</h2>
+    <div class="faq-list">
+        <details class="faq-item">
+            <summary>Welche Sprachen werden unterstützt?</summary>
+            <p>Die KI erkennt und übersetzt automatisch Bewerbungen in allen gängigen Sprachen ins Deutsche.</p>
+        </details>
+        <details class="faq-item">
+            <summary>Wie sicher sind meine Daten?</summary>
+            <p>Alle Daten werden verschlüsselt übertragen und auf EU-Servern gespeichert. Wir geben keine Daten an Dritte weiter.</p>
+        </details>
+        <details class="faq-item">
+            <summary>Kann ich jederzeit kündigen?</summary>
+            <p>Ja, Sie können Ihr Abonnement jederzeit mit einem Klick im Kundenportal kündigen. Es gibt keine Vertragsbindung.</p>
+        </details>
     </div>
 </section>
 {% endblock %}

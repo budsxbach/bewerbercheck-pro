@@ -13,8 +13,11 @@
         <div class="nav-brand">
             <a href="{{ url_for('dashboard.index') }}">⚡ Bewerbercheck-Pro</a>
         </div>
+        <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('nav-open')" aria-label="Menü">
+            <span></span><span></span><span></span>
+        </button>
         <div class="nav-links">
-            <a href="{{ url_for('dashboard.index') }}" class="{% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+            <a href="{{ url_for('dashboard.index') }}" class="{% if request.endpoint == 'dashboard.index' or request.endpoint == 'dashboard.detail' %}active{% endif %}">
                 Dashboard
             </a>
             <a href="{{ url_for('settings_bp.index') }}" class="{% if request.endpoint == 'settings_bp.index' %}active{% endif %}">
@@ -32,22 +35,51 @@
     </nav>
     {% endif %}
 
-    <main class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="alerts">
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
+    <!-- Toast-Benachrichtigungen -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="toast-container" id="toastContainer">
+        {% for category, message in messages %}
+        <div class="toast toast-{{ category }}">
+            <span class="toast-icon">
+                {% if category == 'success' %}✓{% elif category == 'danger' %}✕{% elif category == 'warning' %}!{% else %}i{% endif %}
+            </span>
+            <span class="toast-message">{{ message }}</span>
+            <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
         </div>
-        {% endif %}
-        {% endwith %}
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
 
+    <main class="container">
         {% block content %}{% endblock %}
     </main>
 
     <footer class="footer">
         <p>&copy; 2025 Bewerbercheck-Pro &middot; <a href="#">Datenschutz</a> &middot; <a href="#">Impressum</a></p>
     </footer>
+
+    <script>
+    // Auto-dismiss toasts nach 5 Sekunden
+    document.querySelectorAll('.toast').forEach(function(toast, i) {
+        setTimeout(function() {
+            toast.style.animation = 'toastOut .3s ease forwards';
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 5000 + i * 500);
+    });
+
+    // Loading-State für Formulare
+    document.querySelectorAll('form').forEach(function(form) {
+        form.addEventListener('submit', function() {
+            var btn = this.querySelector('button[type="submit"]');
+            if (btn && !btn.dataset.noloading) {
+                btn.disabled = true;
+                btn.textContent = 'Wird verarbeitet\u2026';
+                btn.classList.add('btn-loading');
+            }
+        });
+    });
+    </script>
 </body>
 </html>

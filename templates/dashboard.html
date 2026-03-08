@@ -14,31 +14,49 @@
     {% endif %}
 </div>
 
+{% if applications %}
+<!-- Stats-Leiste -->
+<div class="stats-bar">
+    <div class="stat-item">
+        <span class="stat-value">{{ applications|length }}</span>
+        <span class="stat-label">Bewerbungen</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value">
+            {% set scores = applications|selectattr('score')|map(attribute='score')|list %}
+            {% if scores %}{{ (scores|sum / scores|length)|round(1) }}{% else %}–{% endif %}
+        </span>
+        <span class="stat-label">⌀ Score</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value stat-highlight">
+            {{ applications|selectattr('score')|selectattr('score', 'ge', 7)|list|length }}
+        </span>
+        <span class="stat-label">Top-Kandidaten</span>
+    </div>
+    {% if fehlerhafte %}
+    <div class="stat-item stat-warn">
+        <span class="stat-value">{{ fehlerhafte|length }}</span>
+        <span class="stat-label">Fehlerhaft</span>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
 {% if fehlerhafte %}
 <div class="alert alert-warning">
-    <strong>⚠️ {{ fehlerhafte|length }} Bewerbung(en) konnten nicht verarbeitet werden:</strong>
-    <table class="applications-table" style="margin-top: 0.75rem;">
-        <thead>
-            <tr>
-                <th>Eingegangen</th>
-                <th>Fehler</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for app in fehlerhafte %}
-            <tr>
-                <td>{{ app.eingegangen_am.strftime('%d.%m.%Y %H:%M') if app.eingegangen_am else '–' }}</td>
-                <td style="font-size: 0.82em; color: var(--gray-600);">{{ app.fehler[:100] }}{% if app.fehler|length > 100 %}...{% endif %}</td>
-                <td>
-                    <form method="POST" action="{{ url_for('dashboard.retry', application_id=app.id) }}" style="display:inline;">
-                        <button type="submit" class="btn btn-sm btn-primary">Erneut verarbeiten</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <strong>{{ fehlerhafte|length }} Bewerbung(en) konnten nicht verarbeitet werden:</strong>
+    <div class="error-list">
+        {% for app in fehlerhafte %}
+        <div class="error-item">
+            <span class="error-date">{{ app.eingegangen_am.strftime('%d.%m. %H:%M') if app.eingegangen_am else '–' }}</span>
+            <span class="error-msg">{{ app.fehler[:80] }}{% if app.fehler|length > 80 %}…{% endif %}</span>
+            <form method="POST" action="{{ url_for('dashboard.retry', application_id=app.id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-sm btn-outline">Erneut verarbeiten</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 {% endif %}
 
@@ -50,27 +68,24 @@
                 <th>Score</th>
                 <th>Name</th>
                 <th>E-Mail</th>
-                <th>Skills</th>
-                <th>Erfahrung</th>
+                <th class="hide-mobile">Skills</th>
+                <th class="hide-mobile">Erfahrung</th>
                 <th>Eingegangen</th>
-                <th></th>
             </tr>
         </thead>
         <tbody>
             {% for app in applications %}
-            <tr class="application-row">
+            <tr class="application-row clickable-row" onclick="window.location='{{ url_for('dashboard.detail', application_id=app.id) }}'">
                 <td>
                     <span class="score-badge score-{{ 'high' if app.score >= 7 else ('mid' if app.score >= 4 else 'low') }}">
                         {{ app.score or '–' }}/10
                     </span>
                 </td>
                 <td class="name-cell">{{ app.bewerber_name or '(Unbekannt)' }}</td>
-                <td>
-                    {% if app.bewerber_email %}
-                    <a href="mailto:{{ app.bewerber_email }}">{{ app.bewerber_email }}</a>
-                    {% else %}–{% endif %}
+                <td class="email-cell">
+                    {% if app.bewerber_email %}{{ app.bewerber_email }}{% else %}–{% endif %}
                 </td>
-                <td class="skills-cell">
+                <td class="skills-cell hide-mobile">
                     {% if app.skills %}
                     {% for skill in app.skills.split(',')[:3] %}
                     <span class="skill-tag">{{ skill.strip() }}</span>
@@ -80,7 +95,7 @@
                     {% endif %}
                     {% else %}–{% endif %}
                 </td>
-                <td>
+                <td class="hide-mobile">
                     {% if app.berufserfahrung_jahre is not none %}
                     {{ app.berufserfahrung_jahre|int }} J.
                     {% else %}–{% endif %}
@@ -88,42 +103,77 @@
                 <td class="date-cell">
                     {{ app.eingegangen_am.strftime('%d.%m.%Y') if app.eingegangen_am else '–' }}
                 </td>
-                <td>
-                    <a href="{{ url_for('dashboard.detail', application_id=app.id) }}"
-                       class="btn btn-sm btn-outline">
-                        Details
-                    </a>
-                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 {% else %}
-<div class="empty-state">
-    <div class="empty-icon">📬</div>
-    <h2>Noch keine Bewerbungen</h2>
-    <p>Tragen Sie Ihre Bewerbungs-E-Mail in Ihre Stellenanzeige ein.</p>
+<!-- Onboarding Empty State -->
+<div class="onboarding-card">
+    <div class="onboarding-header">
+        <div class="empty-icon">📬</div>
+        <h2>Bereit für Ihre erste Bewerbung</h2>
+        <p>Folgen Sie diesen 3 Schritten, um Bewerbungen automatisch zu empfangen.</p>
+    </div>
+
+    <div class="onboarding-steps">
+        {% set has_sheets = current_user.settings and current_user.settings.sheets_url %}
+        {% set has_criteria = current_user.settings and current_user.settings.stellenbeschreibung %}
+
+        <div class="onboarding-step step-done">
+            <div class="step-check">✓</div>
+            <div class="step-content">
+                <strong>Konto erstellt</strong>
+                <p>Ihre Bewerbungs-E-Mail ist aktiv.</p>
+            </div>
+        </div>
+
+        <div class="onboarding-step {{ 'step-done' if has_sheets else 'step-pending' }}">
+            <div class="step-check">{{ '✓' if has_sheets else '2' }}</div>
+            <div class="step-content">
+                <strong>Google Sheet verknüpfen</strong>
+                <p>{{ 'Verknüpft ✓' if has_sheets else 'Noch nicht konfiguriert.' }}</p>
+                {% if not has_sheets %}
+                <a href="{{ url_for('settings_bp.index') }}" class="btn btn-sm btn-primary" style="margin-top:.5rem">Jetzt einrichten</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="onboarding-step {{ 'step-done' if has_criteria else 'step-pending' }}">
+            <div class="step-check">{{ '✓' if has_criteria else '3' }}</div>
+            <div class="step-content">
+                <strong>Stellenbeschreibung hinterlegen</strong>
+                <p>{{ 'Konfiguriert ✓' if has_criteria else 'Hilft der KI, besser zu bewerten.' }}</p>
+                {% if not has_criteria %}
+                <a href="{{ url_for('settings_bp.index') }}" class="btn btn-sm btn-outline" style="margin-top:.5rem">Einrichten</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
     {% if current_user.settings %}
-    <div class="email-display">
-        <code style="font-size: 1rem; color: var(--primary-dark); font-weight: 600; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;">{{ current_user.settings.eigene_email }}</code>
-        <button onclick="copyEmail()" class="btn btn-sm btn-outline" id="copyBtn">
-            Kopieren
-        </button>
+    <div class="onboarding-footer">
+        <p style="font-size:.85rem; color:var(--gray-500); margin-bottom:.75rem;">Ihre Bewerbungs-E-Mail-Adresse:</p>
+        <div class="email-display">
+            <code id="emailCode">{{ current_user.settings.eigene_email }}</code>
+            <button onclick="copyEmail()" class="btn btn-sm btn-outline" id="copyBtn" data-noloading="true">
+                Kopieren
+            </button>
+        </div>
+        <p style="font-size:.82rem; color:var(--gray-400); margin-top:.5rem;">Tragen Sie diese in Ihre Stellenanzeige ein.</p>
     </div>
     {% endif %}
-    <a href="{{ url_for('settings_bp.index') }}" class="btn btn-primary">
-        Einstellungen öffnen
-    </a>
 </div>
 
 <script>
 function copyEmail() {
-    navigator.clipboard.writeText('{{ current_user.settings.eigene_email }}').then(() => {
-        const btn = document.getElementById('copyBtn');
+    var text = document.getElementById('emailCode').textContent;
+    navigator.clipboard.writeText(text).then(function() {
+        var btn = document.getElementById('copyBtn');
         btn.textContent = 'Kopiert!';
         btn.classList.add('btn-copied');
-        setTimeout(() => {
+        setTimeout(function() {
             btn.textContent = 'Kopieren';
             btn.classList.remove('btn-copied');
         }, 2000);

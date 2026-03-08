@@ -17,24 +17,42 @@
 </div>
 {% endif %}
 
+<!-- Quick Actions -->
+<div class="quick-actions">
+    {% if application.bewerber_email %}
+    <a href="mailto:{{ application.bewerber_email }}" class="btn btn-primary btn-sm">
+        ✉ E-Mail schreiben
+    </a>
+    {% endif %}
+    {% if application.telefon %}
+    <a href="tel:{{ application.telefon }}" class="btn btn-outline btn-sm">
+        📞 Anrufen
+    </a>
+    {% endif %}
+</div>
+
 <div class="detail-grid">
-    <div class="detail-section">
+    <div class="card detail-section">
         <h3>Kontakt</h3>
         <dl class="detail-list">
             <dt>E-Mail</dt>
             <dd>
                 {% if application.bewerber_email %}
                 <a href="mailto:{{ application.bewerber_email }}">{{ application.bewerber_email }}</a>
-                {% else %}Nicht angegeben{% endif %}
+                {% else %}<span class="text-muted">Nicht angegeben</span>{% endif %}
             </dd>
             <dt>Telefon</dt>
-            <dd>{{ application.telefon or 'Nicht angegeben' }}</dd>
-            <dt>Eingegangen am</dt>
+            <dd>
+                {% if application.telefon %}
+                <a href="tel:{{ application.telefon }}">{{ application.telefon }}</a>
+                {% else %}<span class="text-muted">Nicht angegeben</span>{% endif %}
+            </dd>
+            <dt>Eingegangen</dt>
             <dd>{{ application.eingegangen_am.strftime('%d.%m.%Y um %H:%M Uhr') if application.eingegangen_am else '–' }}</dd>
         </dl>
     </div>
 
-    <div class="detail-section">
+    <div class="card detail-section">
         <h3>Qualifikation</h3>
         <dl class="detail-list">
             <dt>Ausbildung</dt>
@@ -43,7 +61,7 @@
             <dd>
                 {% if application.berufserfahrung_jahre is not none %}
                 {{ application.berufserfahrung_jahre|int }} Jahre
-                {% else %}Nicht angegeben{% endif %}
+                {% else %}<span class="text-muted">Nicht angegeben</span>{% endif %}
             </dd>
             <dt>Sprachen</dt>
             <dd>{{ application.sprachen or 'Nicht angegeben' }}</dd>
@@ -52,7 +70,7 @@
 </div>
 
 {% if application.skills %}
-<div class="detail-section">
+<div class="card detail-section">
     <h3>Skills & Fähigkeiten</h3>
     <div class="skills-container">
         {% for skill in application.skills.split(',') %}
@@ -63,7 +81,7 @@
 {% endif %}
 
 {% if application.uebersetzter_text %}
-<div class="detail-section">
+<div class="card detail-section">
     <h3>Zusammenfassung (KI-übersetzt)</h3>
     <div class="text-block">{{ application.uebersetzter_text }}</div>
 </div>
@@ -75,4 +93,17 @@
     <div class="text-block">{{ application.original_email_text }}</div>
 </details>
 {% endif %}
+
+<!-- Keyboard Navigation Hint -->
+<div class="keyboard-hint">
+    <kbd>Esc</kbd> oder <a href="{{ url_for('dashboard.index') }}">← Zurück zum Dashboard</a>
+</div>
+
+<script>
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        window.location = '{{ url_for("dashboard.index") }}';
+    }
+});
+</script>
 {% endblock %}

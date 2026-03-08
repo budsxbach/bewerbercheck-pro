@@ -6,15 +6,29 @@
     <h1>Einstellungen</h1>
 </div>
 
+<!-- Setup-Fortschritt -->
+{% set has_sheets = settings.sheets_url %}
+{% set has_criteria = settings.stellenbeschreibung %}
+{% set done_count = 1 + (1 if has_sheets else 0) + (1 if has_criteria else 0) %}
+<div class="setup-progress">
+    <div class="progress-bar">
+        <div class="progress-fill" style="width: {{ (done_count / 3 * 100)|int }}%"></div>
+    </div>
+    <span class="progress-label">Setup: {{ done_count }}/3 erledigt</span>
+</div>
+
 <!-- Bewerbungs-E-Mail -->
 <div class="card settings-card">
-    <h2>📧 Ihre Bewerbungs-E-Mail-Adresse</h2>
+    <div class="settings-header">
+        <h2>📧 Ihre Bewerbungs-E-Mail-Adresse</h2>
+        <span class="check-done">✓ Aktiv</span>
+    </div>
     <p style="color: var(--gray-500); font-size: .9rem; margin-bottom: .5rem;">
         Tragen Sie diese Adresse in Ihre Stellenanzeigen ein. Eingehende Bewerbungen werden automatisch verarbeitet.
     </p>
     <div class="email-display-box">
         <code id="bewerbungsEmail">{{ settings.eigene_email or 'Wird erstellt...' }}</code>
-        <button onclick="copyToClipboard('bewerbungsEmail', this)" class="btn btn-outline btn-sm">Kopieren</button>
+        <button onclick="copyToClipboard('bewerbungsEmail', this)" class="btn btn-outline btn-sm" data-noloading="true">Kopieren</button>
     </div>
     <details style="margin-top:1rem;">
         <summary style="cursor:pointer; color: var(--gray-400); font-size:0.85em; font-weight: 500;">
@@ -32,15 +46,22 @@
 
 <!-- Google Sheets -->
 <div class="card settings-card">
-    <h2>📊 Google Sheets Verknüpfung</h2>
+    <div class="settings-header">
+        <h2>📊 Google Sheets Verknüpfung</h2>
+        {% if has_sheets %}
+        <span class="check-done">✓ Verknüpft</span>
+        {% else %}
+        <span class="check-pending">Offen</span>
+        {% endif %}
+    </div>
     <div class="setup-steps">
         <p><strong>Schritt 1:</strong> Öffnen Sie Ihr Google Sheet und klicken Sie auf „Teilen".</p>
         <p>
-            <strong>Schritt 2:</strong> Fügen Sie diese E-Mail-Adresse als <strong>Editor</strong> hinzu:
+            <strong>Schritt 2:</strong> Fügen Sie diese E-Mail als <strong>Editor</strong> hinzu:
         </p>
         <div class="email-display-box">
             <code id="serviceEmail">{{ service_account_email }}</code>
-            <button onclick="copyToClipboard('serviceEmail', this)" class="btn btn-outline btn-sm">Kopieren</button>
+            <button onclick="copyToClipboard('serviceEmail', this)" class="btn btn-outline btn-sm" data-noloading="true">Kopieren</button>
         </div>
         <p><strong>Schritt 3:</strong> Fügen Sie die URL Ihres Sheets unten ein.</p>
     </div>
@@ -56,7 +77,10 @@
         </div>
 
         <div class="form-group">
-            <label for="stellenbeschreibung">Stellenbeschreibung</label>
+            <label for="stellenbeschreibung">
+                Stellenbeschreibung
+                {% if has_criteria %}<span class="label-badge">✓</span>{% endif %}
+            </label>
             <textarea id="stellenbeschreibung" name="stellenbeschreibung"
                       rows="4" class="form-control"
                       placeholder="Z.B.: Wir suchen einen Softwareentwickler mit Python-Kenntnissen für unser 10-köpfiges Team...">{{ settings.stellenbeschreibung or '' }}</textarea>
@@ -64,7 +88,10 @@
         </div>
 
         <div class="form-group">
-            <label for="bewertungskriterien">Bewertungskriterien</label>
+            <label for="bewertungskriterien">
+                Bewertungskriterien
+                {% if settings.bewertungskriterien %}<span class="label-badge">✓</span>{% endif %}
+            </label>
             <textarea id="bewertungskriterien" name="bewertungskriterien"
                       rows="4" class="form-control"
                       placeholder="Z.B.: Mindestens 3 Jahre Erfahrung, Python Pflicht, Deutsch C1 erforderlich, Englisch von Vorteil">{{ settings.bewertungskriterien or '' }}</textarea>
@@ -91,7 +118,7 @@
         Jetzt abonnieren – 29€/Monat
     </a>
     {% else %}
-    <p class="status-inactive">⚠️ Kein aktives Abonnement. Ihre Testphase ist abgelaufen.</p>
+    <p class="status-inactive">Kein aktives Abonnement. Ihre Testphase ist abgelaufen.</p>
     <a href="{{ url_for('auth.stripe_checkout') }}" class="btn btn-primary">
         Abonnement aktivieren
     </a>
@@ -100,12 +127,12 @@
 
 <script>
 function copyToClipboard(elementId, btn) {
-    const text = document.getElementById(elementId).textContent;
-    navigator.clipboard.writeText(text).then(() => {
-        const original = btn.textContent;
+    var text = document.getElementById(elementId).textContent;
+    navigator.clipboard.writeText(text).then(function() {
+        var original = btn.textContent;
         btn.textContent = 'Kopiert!';
         btn.classList.add('btn-copied');
-        setTimeout(() => {
+        setTimeout(function() {
             btn.textContent = original;
             btn.classList.remove('btn-copied');
         }, 2000);

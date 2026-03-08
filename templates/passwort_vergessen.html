@@ -9,6 +9,7 @@
         <p class="auth-subtitle">Geben Sie Ihre E-Mail-Adresse ein. Wir senden Ihnen einen Reset-Link.</p>
 
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="email">E-Mail-Adresse</label>
                 <input type="email" id="email" name="email" required

@@ -60,6 +60,7 @@ class CustomerSettings(db.Model):
     sheets_url = db.Column(db.Text)
     stellenbeschreibung = db.Column(db.Text)
     bewertungskriterien = db.Column(db.Text)
+    email_benachrichtigung = db.Column(db.Boolean, default=True, nullable=False)
     aktualisiert_am = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
@@ -83,3 +84,4 @@ class Application(db.Model):
     verarbeitet = db.Column(db.Boolean, default=False)
     sheets_geschrieben = db.Column(db.Boolean, default=False)
     fehler = db.Column(db.Text)               # Falls KI-Verarbeitung fehlschlug
+    mailgun_message_id = db.Column(db.String(255), unique=True, index=True)  # Deduplizierung

@@ -1221,3 +1221,155 @@ kbd {
     .quick-actions { flex-direction: column; }
     .quick-actions .btn { width: 100%; }
 }
+
+/* ── Cookie Banner ────────────────────────────────────── */
+.cookie-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--gray-900);
+    color: var(--gray-200);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    z-index: 1000;
+    font-size: .85rem;
+    box-shadow: 0 -4px 20px rgba(0,0,0,.15);
+}
+.cookie-banner p { margin: 0; }
+
+/* ── Error Pages (404, 500, 403) ──────────────────────── */
+.error-page {
+    text-align: center;
+    padding: 6rem 2rem;
+}
+.error-code {
+    font-size: 6rem;
+    font-weight: 800;
+    color: var(--gray-200);
+    line-height: 1;
+    letter-spacing: -.04em;
+}
+.error-page h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 1rem 0 .5rem;
+}
+.error-page p {
+    color: var(--gray-500);
+    margin-bottom: 2rem;
+}
+
+/* ── Pagination ────────────────────────────────────────── */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.5rem 0;
+}
+.pagination-info {
+    font-size: .85rem;
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+/* ── Danger Zone (Settings) ────────────────────────────── */
+.danger-zone {
+    border-color: var(--danger);
+    border-style: dashed;
+}
+.danger-zone h2 {
+    color: var(--danger);
+}
+.btn-danger {
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    padding: .6rem 1.5rem;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: .875rem;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.btn-danger:hover {
+    background: #b91c1c;
+}
+
+/* ── Testimonials (Landing) ────────────────────────────── */
+.testimonials {
+    padding: 3rem 0;
+}
+.testimonials h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    color: var(--gray-900);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+.testimonial-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+.testimonial-card {
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+.testimonial-text {
+    font-size: .95rem;
+    color: var(--gray-700);
+    line-height: 1.7;
+    font-style: italic;
+    margin-bottom: 1rem;
+}
+.testimonial-author strong {
+    display: block;
+    font-size: .85rem;
+    color: var(--gray-800);
+}
+.testimonial-author span {
+    font-size: .78rem;
+    color: var(--gray-400);
+}
+
+/* ── Legal Pages (Impressum, Datenschutz) ─────────────── */
+.legal-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 0 4rem;
+}
+.legal-page h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 2rem;
+    letter-spacing: -.02em;
+}
+.legal-page h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 2rem 0 .75rem;
+}
+.legal-page p, .legal-page li {
+    font-size: .92rem;
+    color: var(--gray-600);
+    line-height: 1.8;
+}
+.legal-page ul {
+    padding-left: 1.5rem;
+    margin: .5rem 0;
+}
+.legal-page li {
+    margin-bottom: .5rem;
+}

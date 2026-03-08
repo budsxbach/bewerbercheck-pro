@@ -18,7 +18,7 @@
 <!-- Stats-Leiste -->
 <div class="stats-bar">
     <div class="stat-item">
-        <span class="stat-value">{{ applications|length }}</span>
+        <span class="stat-value">{{ pagination.total }}</span>
         <span class="stat-label">Bewerbungen</span>
     </div>
     <div class="stat-item">
@@ -52,6 +52,7 @@
             <span class="error-date">{{ app.eingegangen_am.strftime('%d.%m. %H:%M') if app.eingegangen_am else '–' }}</span>
             <span class="error-msg">{{ app.fehler[:80] }}{% if app.fehler|length > 80 %}…{% endif %}</span>
             <form method="POST" action="{{ url_for('dashboard.retry', application_id=app.id) }}" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-sm btn-outline">Erneut verarbeiten</button>
             </form>
         </div>
@@ -108,6 +109,19 @@
         </tbody>
     </table>
 </div>
+
+{% if pagination.pages > 1 %}
+<div class="pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('dashboard.index', page=pagination.prev_num) }}" class="btn btn-outline btn-sm">&larr; Zurück</a>
+    {% endif %}
+    <span class="pagination-info">Seite {{ pagination.page }} von {{ pagination.pages }}</span>
+    {% if pagination.has_next %}
+    <a href="{{ url_for('dashboard.index', page=pagination.next_num) }}" class="btn btn-outline btn-sm">Weiter &rarr;</a>
+    {% endif %}
+</div>
+{% endif %}
+
 {% else %}
 <!-- Onboarding Empty State -->
 <div class="onboarding-card">

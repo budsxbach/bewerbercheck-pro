@@ -1,6 +1,7 @@
 import uuid
 import stripe
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_mail import Message
@@ -9,6 +10,14 @@ from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from .models import db, User, CustomerSettings, TESTPHASE_TAGE
 
 auth_bp = Blueprint("auth", __name__)
+
+
+def _is_safe_redirect_url(target):
+    """Verhindert Open Redirects – nur relative URLs ohne Netloc sind erlaubt."""
+    if not target:
+        return False
+    parsed = urlparse(target)
+    return not parsed.netloc and not parsed.scheme
 
 
 def _get_serializer():
@@ -214,6 +223,8 @@ def login():
         if user and user.check_password(passwort):
             login_user(user, remember=True)
             next_page = request.args.get("next")
+            if not _is_safe_redirect_url(next_page):
+                next_page = None
             return redirect(next_page or url_for("dashboard.index"))
 
         flash("E-Mail oder Passwort falsch.", "danger")
@@ -374,6 +385,10 @@ def stripe_webhook():
         _handle_subscription_ended(event["data"]["object"])
     elif event_type == "invoice.payment_failed":
         _handle_payment_failed(event["data"]["object"])
+    elif event_type == "invoice.payment_succeeded":
+        _handle_payment_succeeded(event["data"]["object"])
+    elif event_type == "customer.subscription.trial_will_end":
+        _handle_trial_will_end(event["data"]["object"])
 
     return "OK", 200
 
@@ -407,3 +422,37 @@ def _handle_payment_failed(invoice):
     if user:
         user.abo_aktiv = False
         db.session.commit()
+
+
+def _handle_payment_succeeded(invoice):
+    """Re-aktiviert Abo nach zuvor fehlgeschlagener Zahlung."""
+    user = User.query.filter_by(stripe_customer_id=invoice["customer"]).first()
+    if user:
+        user.abo_aktiv = True
+        db.session.commit()
+
+
+def _handle_trial_will_end(subscription):
+    """Sendet Warnung 3 Tage vor Trial-Ablauf per E-Mail."""
+    user = User.query.filter_by(stripe_customer_id=subscription["customer"]).first()
+    if not user:
+        return
+
+    try:
+        from app import mail
+        msg = Message(
+            subject="Bewerbercheck-Pro – Ihre Testphase endet bald",
+            recipients=[user.email],
+            body=(
+                f"Hallo,\n\n"
+                f"Ihre kostenlose Testphase bei Bewerbercheck-Pro endet in 3 Tagen.\n\n"
+                f"Um den Service weiter zu nutzen, aktivieren Sie bitte Ihr Abonnement "
+                f"in Ihren Kontoeinstellungen.\n\n"
+                f"Bei Fragen antworten Sie einfach auf diese E-Mail.\n\n"
+                f"Viele Grüße\n"
+                f"Ihr Bewerbercheck-Pro Team"
+            ),
+        )
+        mail.send(msg)
+    except Exception as e:
+        current_app.logger.error(f"Trial-Warnung E-Mail Fehler: {e}")

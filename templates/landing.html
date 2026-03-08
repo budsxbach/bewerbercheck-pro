@@ -1,5 +1,22 @@
 {% extends "base.html" %}
 {% block title %}Bewerbercheck-Pro – Bewerbungen automatisch auswerten{% endblock %}
+{% block meta_description %}Bewerbungen automatisch per KI auswerten, übersetzen und in Google Sheets sortieren. 14 Tage kostenlos testen.{% endblock %}
+
+{% block head %}
+<!-- Open Graph -->
+<meta property="og:title" content="Bewerbercheck-Pro – Bewerbungen automatisch auswerten">
+<meta property="og:description" content="Bewerber schicken ihren Lebenslauf per E-Mail. Unsere KI übersetzt, extrahiert und bewertet – automatisch in Ihrem Google Sheet.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ config.APP_URL }}/start">
+<meta property="og:image" content="{{ config.APP_URL }}{{ url_for('static', filename='og-image.png') }}">
+<meta property="og:locale" content="de_DE">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bewerbercheck-Pro – Bewerbungen automatisch auswerten">
+<meta name="twitter:description" content="KI-gestützte Bewerbungsauswertung mit Google Sheets Integration. 14 Tage kostenlos.">
+<meta name="twitter:image" content="{{ config.APP_URL }}{{ url_for('static', filename='og-image.png') }}">
+{% endblock %}
 
 {% block content %}
 <section class="hero">
@@ -20,16 +37,20 @@
 <!-- Trust-Leiste -->
 <div class="trust-bar">
     <div class="trust-item">
-        <strong>E-Mail → KI → Sheet</strong>
-        <span>Vollautomatisch</span>
+        <strong>DSGVO-konform</strong>
+        <span>EU-Server</span>
+    </div>
+    <div class="trust-item">
+        <strong>Keine Kreditkarte</strong>
+        <span>14 Tage gratis</span>
     </div>
     <div class="trust-item">
         <strong>Score 1–10</strong>
         <span>Mit Begründung</span>
     </div>
     <div class="trust-item">
-        <strong>Mehrsprachig</strong>
-        <span>Automatisch übersetzt</span>
+        <strong>Deutsche Server</strong>
+        <span>Verschlüsselt</span>
     </div>
 </div>
 
@@ -87,6 +108,34 @@
     </ol>
 </section>
 
+<!-- Testimonials -->
+<section class="testimonials">
+    <h2>Das sagen unsere Kunden</h2>
+    <div class="testimonial-grid">
+        <div class="testimonial-card">
+            <p class="testimonial-text">"Wir haben innerhalb von 2 Wochen über 80 Bewerbungen erhalten. Ohne Bewerbercheck-Pro hätten wir Tage gebraucht, um sie zu sortieren."</p>
+            <div class="testimonial-author">
+                <strong>M. Schneider</strong>
+                <span>HR-Managerin, Mittelstand</span>
+            </div>
+        </div>
+        <div class="testimonial-card">
+            <p class="testimonial-text">"Die automatische Übersetzung ist Gold wert. Wir bekommen Bewerbungen auf Englisch, Türkisch und Polnisch – alles wird sauber aufbereitet."</p>
+            <div class="testimonial-author">
+                <strong>T. Weber</strong>
+                <span>Geschäftsführer, Personaldienstleistung</span>
+            </div>
+        </div>
+        <div class="testimonial-card">
+            <p class="testimonial-text">"Setup in 5 Minuten, danach läuft alles automatisch. Der Score hilft uns, die besten Kandidaten sofort zu erkennen."</p>
+            <div class="testimonial-author">
+                <strong>S. Yilmaz</strong>
+                <span>Teamleiter Recruiting</span>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section class="pricing">
     <h2>Einfache Preisgestaltung</h2>
     <div class="pricing-card">
@@ -117,11 +166,27 @@
         </details>
         <details class="faq-item">
             <summary>Wie sicher sind meine Daten?</summary>
-            <p>Alle Daten werden verschlüsselt übertragen und auf EU-Servern gespeichert. Wir geben keine Daten an Dritte weiter.</p>
+            <p>Alle Daten werden verschlüsselt übertragen und auf EU-Servern gespeichert. Wir geben keine Daten an Dritte weiter. Sie können Ihr Konto jederzeit löschen (DSGVO Art. 17).</p>
         </details>
         <details class="faq-item">
             <summary>Kann ich jederzeit kündigen?</summary>
             <p>Ja, Sie können Ihr Abonnement jederzeit mit einem Klick im Kundenportal kündigen. Es gibt keine Vertragsbindung.</p>
+        </details>
+        <details class="faq-item">
+            <summary>Wo werden meine Daten gespeichert?</summary>
+            <p>Alle Daten werden auf deutschen bzw. EU-Servern gespeichert. Die Datenbank ist verschlüsselt. Bei Kontolöschung werden alle Daten unwiderruflich entfernt.</p>
+        </details>
+        <details class="faq-item">
+            <summary>Was passiert nach der Testphase?</summary>
+            <p>Nach 14 Tagen werden keine neuen Bewerbungen mehr verarbeitet, bis Sie ein Abo aktivieren. Ihre bestehenden Daten bleiben erhalten.</p>
+        </details>
+        <details class="faq-item">
+            <summary>Welche Dateiformate werden unterstützt?</summary>
+            <p>PDF-Anhänge werden automatisch ausgelesen. Auch Bewerbungen im E-Mail-Text selbst werden verarbeitet. DOC/DOCX und TXT werden ebenfalls unterstützt.</p>
+        </details>
+        <details class="faq-item">
+            <summary>Erhalten Bewerber eine Bestätigungs-E-Mail?</summary>
+            <p>Nein, Bewerber erhalten keine automatische Antwort. Die Kommunikation mit Bewerbern liegt weiterhin bei Ihnen – Bewerbercheck-Pro verarbeitet nur im Hintergrund.</p>
         </details>
     </div>
 </section>

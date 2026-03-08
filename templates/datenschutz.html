@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Datenschutzerklärung – Bewerbercheck-Pro{% endblock %}
+
+{% block content %}
+<div class="legal-page">
+    <h1>Datenschutzerklärung</h1>
+
+    <h2>1. Verantwortlicher</h2>
+    <p>
+        Online Infinity Solutions<br>
+        Pestalozzistrasse 25, 22305 Hamburg<br>
+        E-Mail: info@systemautomatik.de
+    </p>
+
+    <h2>2. Erhebung und Speicherung personenbezogener Daten</h2>
+    <p>
+        Bei der Nutzung von Bewerbercheck-Pro erheben wir folgende Daten:
+    </p>
+    <ul>
+        <li><strong>Registrierung:</strong> E-Mail-Adresse, Passwort (verschlüsselt gespeichert).</li>
+        <li><strong>Bewerbungsverarbeitung:</strong> Eingehende E-Mails und Anhänge werden verarbeitet und die extrahierten Daten (Name, E-Mail, Telefon, Skills, Erfahrung, Score) gespeichert.</li>
+        <li><strong>Zahlung:</strong> Zahlungsdaten werden direkt von Stripe verarbeitet. Wir speichern nur die Stripe-Kunden-ID.</li>
+    </ul>
+
+    <h2>3. Zweck der Datenverarbeitung</h2>
+    <p>Wir verarbeiten Ihre Daten ausschließlich zur Bereitstellung des Dienstes:</p>
+    <ul>
+        <li>Kontoverwaltung und Authentifizierung</li>
+        <li>Automatische Auswertung eingehender Bewerbungen per KI</li>
+        <li>Übertragung der Ergebnisse in Ihr Google Sheet</li>
+        <li>Abrechnung über Stripe</li>
+    </ul>
+
+    <h2>4. Rechtsgrundlage</h2>
+    <p>
+        Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung)
+        und Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Bereitstellung des Dienstes).
+    </p>
+
+    <h2>5. Empfänger der Daten</h2>
+    <ul>
+        <li><strong>Anthropic (Claude API):</strong> Bewerbungstexte werden zur KI-Analyse übermittelt.</li>
+        <li><strong>Google (Sheets API):</strong> Extrahierte Daten werden in Ihr Google Sheet geschrieben.</li>
+        <li><strong>Stripe:</strong> Zahlungsabwicklung.</li>
+        <li><strong>Mailgun:</strong> E-Mail-Empfang und -Weiterleitung.</li>
+    </ul>
+
+    <h2>6. Speicherdauer</h2>
+    <p>
+        Ihre Daten werden gespeichert, solange Ihr Konto aktiv ist.
+        Nach Kontolöschung werden alle Daten unwiderruflich entfernt.
+    </p>
+
+    <h2>7. Ihre Rechte (DSGVO)</h2>
+    <p>Sie haben das Recht auf:</p>
+    <ul>
+        <li><strong>Auskunft</strong> (Art. 15 DSGVO)</li>
+        <li><strong>Berichtigung</strong> (Art. 16 DSGVO)</li>
+        <li><strong>Löschung</strong> (Art. 17 DSGVO) – über „Konto löschen" in den Einstellungen</li>
+        <li><strong>Einschränkung der Verarbeitung</strong> (Art. 18 DSGVO)</li>
+        <li><strong>Datenübertragbarkeit</strong> (Art. 20 DSGVO)</li>
+        <li><strong>Widerspruch</strong> (Art. 21 DSGVO)</li>
+    </ul>
+
+    <h2>8. Cookies</h2>
+    <p>
+        Wir verwenden ausschließlich technisch notwendige Session-Cookies zur Authentifizierung.
+        Diese Cookies sind für die Nutzung des Dienstes erforderlich und können nicht deaktiviert werden.
+    </p>
+
+    <h2>9. Hosting</h2>
+    <p>
+        Die Anwendung wird auf Servern in der EU gehostet. Die Datenbank wird verschlüsselt gespeichert.
+    </p>
+
+    <h2>10. Änderungen</h2>
+    <p>
+        Wir behalten uns vor, diese Datenschutzerklärung anzupassen, um sie an geänderte Rechtslagen
+        oder Änderungen des Dienstes anzupassen.
+    </p>
+</div>
+{% endblock %}

@@ -38,6 +38,7 @@
             <p style="margin:0 0 0.75rem; font-size:0.9em; color: var(--gray-600);">Falls keine Bewerbungen ankommen, kann die Weiterleitungsregel neu erstellt werden:</p>
             <form method="POST" action="{{ url_for('settings_bp.route_reparieren') }}"
                   onsubmit="return confirm('Mailgun-Route neu erstellen?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-outline btn-sm">Route neu erstellen</button>
             </form>
         </div>
@@ -67,6 +68,7 @@
     </div>
 
     <form method="POST" action="{{ url_for('settings_bp.index') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="sheets_url">Google Sheets URL</label>
             <input type="url" id="sheets_url" name="sheets_url"
@@ -123,6 +125,19 @@
         Abonnement aktivieren
     </a>
     {% endif %}
+</div>
+
+<!-- Gefahrenzone -->
+<div class="card settings-card danger-zone">
+    <h2>Gefahrenzone</h2>
+    <p style="color: var(--gray-500); font-size: .9rem; margin-bottom: 1rem;">
+        Diese Aktion kann nicht rückgängig gemacht werden. Alle Ihre Daten (Bewerbungen, Einstellungen, Konto) werden unwiderruflich gelöscht.
+    </p>
+    <form method="POST" action="{{ url_for('settings_bp.konto_loeschen') }}"
+          onsubmit="return confirm('Sind Sie sicher? Alle Daten werden unwiderruflich gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden.');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-danger">Konto unwiderruflich löschen</button>
+    </form>
 </div>
 
 <script>

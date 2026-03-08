@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Seite nicht gefunden – Bewerbercheck-Pro{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <div class="error-code">404</div>
+    <h1>Seite nicht gefunden</h1>
+    <p>Die angeforderte Seite existiert leider nicht.</p>
+    <a href="{{ url_for('landing') }}" class="btn btn-primary">Zur Startseite</a>
+</div>
+{% endblock %}

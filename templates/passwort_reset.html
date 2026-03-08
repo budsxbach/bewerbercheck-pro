@@ -8,6 +8,7 @@
         <h1>Neues Passwort setzen</h1>
 
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="passwort">Neues Passwort</label>
                 <input type="password" id="passwort" name="passwort" required

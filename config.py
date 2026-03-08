@@ -45,3 +45,6 @@ class Config:
 
     # Admin diagnostic key (protects /admin/mailgun-diagnose)
     ADMIN_DIAGNOSE_KEY = os.environ.get("ADMIN_DIAGNOSE_KEY")
+
+    # Analytics (DSGVO-konform, kein Cookie-Consent nötig)
+    PLAUSIBLE_DOMAIN = os.environ.get("PLAUSIBLE_DOMAIN")

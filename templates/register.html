@@ -9,6 +9,7 @@
         <p class="auth-subtitle">14 Tage kostenlos testen – keine Kreditkarte nötig.</p>
 
         <form method="POST" action="{{ url_for('auth.register') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="email">Ihre E-Mail-Adresse</label>
                 <input type="email" id="email" name="email" required

@@ -3,6 +3,7 @@ import hmac
 import io
 import logging
 from flask import Blueprint, request, current_app
+from flask_mail import Message
 
 from .models import db, CustomerSettings, Application
 from .ai_processor import verarbeite_bewerbung
@@ -20,6 +21,14 @@ def email_webhook():
     if not _verify_mailgun_signature(request):
         logger.warning("Mailgun Webhook: Ungültige Signatur – Anfrage abgelehnt.")
         return "Unauthorized", 401
+
+    # Deduplizierung: Mailgun Message-ID prüfen
+    message_id = request.form.get("Message-Id", "").strip()
+    if message_id:
+        existing = Application.query.filter_by(mailgun_message_id=message_id).first()
+        if existing:
+            logger.info(f"Duplikat ignoriert: Message-ID {message_id}")
+            return "OK", 200
 
     empfaenger = request.form.get("recipient", "").lower().strip()
     absender = request.form.get("sender", "").strip()
@@ -46,6 +55,7 @@ def email_webhook():
         user_id=user.id,
         original_email_text=body_plain or _html_zu_text(body_html),
         verarbeitet=False,
+        mailgun_message_id=message_id or None,
     )
     db.session.add(application)
     db.session.commit()
@@ -84,12 +94,40 @@ def email_webhook():
                 application.sheets_geschrieben = False
                 db.session.commit()
 
+        # Benachrichtigung per E-Mail (falls aktiviert)
+        if customer_settings.email_benachrichtigung:
+            _sende_bewerbungsbenachrichtigung(user, application)
+
     except Exception as e:
         logger.error(f"KI-Verarbeitung Fehler für Application {application.id}: {e}")
         application.fehler = str(e)
         db.session.commit()
 
     return "OK", 200
+
+
+def _sende_bewerbungsbenachrichtigung(user, application):
+    """Sendet eine E-Mail-Benachrichtigung über eine neue Bewerbung."""
+    try:
+        from app import mail
+        name = application.bewerber_name or "Unbekannt"
+        score = application.score or "–"
+        msg = Message(
+            subject=f"Neue Bewerbung: {name} (Score: {score}/10)",
+            recipients=[user.email],
+            body=(
+                f"Eine neue Bewerbung wurde verarbeitet:\n\n"
+                f"Name: {name}\n"
+                f"Score: {score}/10\n"
+                f"E-Mail: {application.bewerber_email or '–'}\n\n"
+                f"Details finden Sie in Ihrem Dashboard.\n\n"
+                f"– Bewerbercheck-Pro\n\n"
+                f"Tipp: Sie können diese Benachrichtigungen in den Einstellungen deaktivieren."
+            ),
+        )
+        mail.send(msg)
+    except Exception as e:
+        logger.error(f"Benachrichtigungs-E-Mail Fehler für User {user.id}: {e}")
 
 
 def _verify_mailgun_signature(req) -> bool:

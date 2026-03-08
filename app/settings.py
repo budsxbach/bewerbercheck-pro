@@ -37,6 +37,27 @@ def index():
     return render_template("settings.html", settings=settings, service_account_email=service_account_email)
 
 
+@settings_bp.route("/einstellungen/konto-loeschen", methods=["POST"])
+@login_required
+def konto_loeschen():
+    """DSGVO Art. 17 – Recht auf Löschung. Löscht User + alle Daten (Cascade)."""
+    user = User.query.get(current_user.id)
+    if not user:
+        flash("Benutzer nicht gefunden.", "danger")
+        return redirect(url_for("settings_bp.index"))
+
+    from flask_login import logout_user
+    user_email = user.email
+    logout_user()
+
+    db.session.delete(user)
+    db.session.commit()
+
+    current_app.logger.info(f"Konto gelöscht: {user_email}")
+    flash("Ihr Konto und alle Daten wurden unwiderruflich gelöscht.", "info")
+    return redirect(url_for("landing"))
+
+
 @settings_bp.route("/einstellungen/route-reparieren", methods=["POST"])
 @login_required
 def route_reparieren():

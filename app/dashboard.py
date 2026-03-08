@@ -1,5 +1,5 @@
 import logging
-from flask import Blueprint, render_template, redirect, url_for, abort, flash
+from flask import Blueprint, render_template, redirect, url_for, abort, flash, request
 from flask_login import login_required, current_user
 
 from .models import db, Application, CustomerSettings
@@ -17,12 +17,14 @@ def index():
     if not current_user.hat_zugang:
         return redirect(url_for("auth.stripe_checkout"))
 
-    # Bewerbungen nach Score absteigend sortiert
-    applications = (
+    page = request.args.get("page", 1, type=int)
+
+    # Bewerbungen nach Score absteigend sortiert (paginiert)
+    pagination = (
         Application.query
         .filter_by(user_id=current_user.id, verarbeitet=True)
         .order_by(Application.score.desc().nullslast(), Application.eingegangen_am.desc())
-        .all()
+        .paginate(page=page, per_page=25, error_out=False)
     )
 
     fehlerhafte = (
@@ -35,7 +37,8 @@ def index():
 
     return render_template(
         "dashboard.html",
-        applications=applications,
+        applications=pagination.items,
+        pagination=pagination,
         fehlerhafte=fehlerhafte,
     )
 

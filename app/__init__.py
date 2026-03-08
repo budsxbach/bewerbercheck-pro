@@ -1,11 +1,19 @@
-from flask import Flask, redirect, url_for, jsonify
+import logging
+from flask import Flask, redirect, url_for, jsonify, render_template, request, make_response
 from flask_login import LoginManager
 from flask_mail import Mail
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 from .models import db, User
 
 mail = Mail()
 login_manager = LoginManager()
+csrf = CSRFProtect()
+limiter = Limiter(key_func=get_remote_address, default_limits=[], storage_uri="memory://")
+
+logger = logging.getLogger(__name__)
 
 
 def _add_column_if_missing(db, table, column, col_type):
@@ -27,6 +35,9 @@ def create_app():
     db.init_app(app)
     mail.init_app(app)
     login_manager.init_app(app)
+    csrf.init_app(app)
+    limiter.init_app(app)
+
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Bitte einloggen um fortzufahren."
     login_manager.login_message_category = "warning"
@@ -46,7 +57,36 @@ def create_app():
     app.register_blueprint(settings_bp)
     app.register_blueprint(email_bp)
 
-    # Startseite
+    # Webhooks von CSRF exemieren (externe Dienste senden keinen Token)
+    csrf.exempt(email_bp)
+
+    # Stripe Webhook einzeln exemieren
+    from .auth import stripe_webhook as _sw
+    csrf.exempt(_sw)
+
+    # Rate Limiting auf kritische Auth-Endpunkte (via shared_limit)
+    _auth_limits = {
+        "auth.login": "5 per minute",
+        "auth.register": "3 per minute",
+        "auth.passwort_vergessen": "3 per minute",
+    }
+
+    # Dekoriere die View-Funktionen mit Rate Limits
+    for endpoint_name, limit_string in _auth_limits.items():
+        view_func = app.view_functions.get(endpoint_name)
+        if view_func:
+            app.view_functions[endpoint_name] = limiter.limit(limit_string)(view_func)
+
+    # ─── Security Headers ────────────────────────────────────────
+    @app.after_request
+    def set_security_headers(response):
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        return response
+
+    # ─── Startseite ──────────────────────────────────────────────
     @app.route("/")
     def index():
         from flask_login import current_user
@@ -56,25 +96,85 @@ def create_app():
 
     @app.route("/start")
     def landing():
-        from flask import render_template
         return render_template("landing.html")
 
-    # Health-Check
+    # ─── Rechtliches ─────────────────────────────────────────────
+    @app.route("/impressum")
+    def impressum():
+        return render_template("impressum.html")
+
+    @app.route("/datenschutz")
+    def datenschutz():
+        return render_template("datenschutz.html")
+
+    # ─── Health-Check (keine Details nach außen) ─────────────────
     @app.route("/health")
     def health():
         try:
             db.session.execute(db.text("SELECT 1"))
             return jsonify({"status": "ok"}), 200
         except Exception as e:
-            return jsonify({"status": "error", "detail": str(e)}), 500
+            logger.error(f"Health-Check fehlgeschlagen: {e}")
+            return jsonify({"status": "error"}), 500
 
-    # Datenbankinitialisierung
+    # ─── SEO: robots.txt & sitemap.xml ───────────────────────────
+    @app.route("/robots.txt")
+    def robots_txt():
+        content = """User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /einstellungen
+Disallow: /webhook/
+Disallow: /admin/
+Disallow: /abo/
+
+Sitemap: {base}/sitemap.xml
+""".format(base=app.config.get("APP_URL", "https://bewerbercheck-pro.de"))
+        response = make_response(content)
+        response.headers["Content-Type"] = "text/plain"
+        return response
+
+    @app.route("/sitemap.xml")
+    def sitemap_xml():
+        base = app.config.get("APP_URL", "https://bewerbercheck-pro.de")
+        urls = [
+            (f"{base}/start", "weekly", "1.0"),
+            (f"{base}/impressum", "monthly", "0.3"),
+            (f"{base}/datenschutz", "monthly", "0.3"),
+            (f"{base}/login", "monthly", "0.5"),
+            (f"{base}/register", "monthly", "0.5"),
+        ]
+        xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        for loc, freq, prio in urls:
+            xml += f"  <url><loc>{loc}</loc><changefreq>{freq}</changefreq><priority>{prio}</priority></url>\n"
+        xml += "</urlset>"
+        response = make_response(xml)
+        response.headers["Content-Type"] = "application/xml"
+        return response
+
+    # ─── Custom Error Pages ──────────────────────────────────────
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template("403.html"), 403
+
+    @app.errorhandler(404)
+    def not_found(e):
+        return render_template("404.html"), 404
+
+    @app.errorhandler(500)
+    def internal_error(e):
+        return render_template("500.html"), 500
+
+    # ─── Datenbankinitialisierung ────────────────────────────────
     with app.app_context():
         db.create_all()
 
         # Neue Spalten zu bestehenden Tabellen hinzufügen (db.create_all() macht das nicht)
         _add_column_if_missing(db, "users", "testphase_enddatum", "TIMESTAMP")
         _add_column_if_missing(db, "applications", "sheets_geschrieben", "BOOLEAN DEFAULT FALSE")
+        _add_column_if_missing(db, "applications", "mailgun_message_id", "VARCHAR(255) UNIQUE")
+        _add_column_if_missing(db, "customer_settings", "email_benachrichtigung", "BOOLEAN DEFAULT TRUE")
 
         # Einmalig: Bestehende User ohne testphase_enddatum bekommen 14 Tage ab erstellt_am
         from datetime import timedelta

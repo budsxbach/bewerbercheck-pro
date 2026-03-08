@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}Bewerbercheck-Pro – Bewerbungen automatisch per KI auswerten, übersetzen und in Google Sheets sortieren.{% endblock %}">
+    <link rel="canonical" href="{% block canonical %}{{ config.APP_URL }}{{ request.path }}{% endblock %}">
     <title>{% block title %}Bewerbercheck-Pro{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+    {% block head %}{% endblock %}
 </head>
 <body>
     {% if current_user.is_authenticated %}
@@ -57,8 +60,18 @@
     </main>
 
     <footer class="footer">
-        <p>&copy; 2025 Bewerbercheck-Pro &middot; <a href="#">Datenschutz</a> &middot; <a href="#">Impressum</a></p>
+        <p>&copy; 2025 Bewerbercheck-Pro &middot; <a href="{{ url_for('datenschutz') }}">Datenschutz</a> &middot; <a href="{{ url_for('impressum') }}">Impressum</a></p>
     </footer>
+
+    <!-- Cookie-Banner (nur Session-Cookies) -->
+    <div class="cookie-banner" id="cookieBanner" style="display:none;">
+        <p>Diese Website verwendet nur technisch notwendige Cookies für die Sitzungsverwaltung.</p>
+        <button class="btn btn-primary btn-sm" onclick="acceptCookies()">Verstanden</button>
+    </div>
+
+    {% if config.PLAUSIBLE_DOMAIN %}
+    <script defer data-domain="{{ config.PLAUSIBLE_DOMAIN }}" src="https://plausible.io/js/script.js"></script>
+    {% endif %}
 
     <script>
     // Auto-dismiss toasts nach 5 Sekunden
@@ -80,6 +93,15 @@
             }
         });
     });
+
+    // Cookie-Banner
+    if (!localStorage.getItem('cookies_accepted')) {
+        document.getElementById('cookieBanner').style.display = 'flex';
+    }
+    function acceptCookies() {
+        localStorage.setItem('cookies_accepted', 'true');
+        document.getElementById('cookieBanner').style.display = 'none';
+    }
     </script>
 </body>
 </html>

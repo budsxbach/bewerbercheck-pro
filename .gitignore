@@ -18,3 +18,11 @@ bewerbercheck-pro-*.json
 DEPLOY-CHECKLIST.md
 *.exe
 .claude/
+
+# Playwright MCP Test-Daten
+.playwright-mcp/
+
+# Screenshots mit sensiblen Daten
+Zugangsdaten.png
+einstellungen.png
+landing.png

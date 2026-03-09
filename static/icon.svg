@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <style>
+    .bg { fill: #4f46e5; }
+    .check { fill: #fff; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #6366f1; }
+    }
+  </style>
+  <rect class="bg" width="512" height="512" rx="96"/>
+  <path class="check" d="M395.2 170.6a24 24 0 0 1 0 33.9L228.5 371.2a24 24 0 0 1-33.9 0l-78.8-78.8a24 24 0 1 1 33.9-33.9L211.6 320.3 361.3 170.6a24 24 0 0 1 33.9 0z"/>
+</svg>

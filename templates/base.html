@@ -7,14 +7,16 @@
     <link rel="canonical" href="{% block canonical %}{{ config.APP_URL }}{{ request.path }}{% endblock %}">
     <title>{% block title %}Bewerbercheck-Pro{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="32x32">
+    <link rel="icon" href="{{ url_for('static', filename='icon.svg') }}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
     {% block head %}{% endblock %}
 </head>
 <body>
     {% if current_user.is_authenticated %}
     <nav class="navbar">
         <div class="nav-brand">
-            <a href="{{ url_for('dashboard.index') }}">⚡ Bewerbercheck-Pro</a>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-brand-link"><img src="{{ url_for('static', filename='icon.svg') }}" width="28" height="28" alt="" class="nav-logo"> Bewerbercheck-Pro</a>
         </div>
         <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('nav-open')" aria-label="Menü">
             <span></span><span></span><span></span>

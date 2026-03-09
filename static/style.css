@@ -75,12 +75,21 @@ a:hover { color: var(--primary-dark); }
     z-index: 100;
 }
 
-.nav-brand a {
+.nav-brand a,
+.nav-brand-link {
     font-weight: 700;
     font-size: 1rem;
     color: #fff;
     text-decoration: none;
     letter-spacing: -.01em;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+.nav-logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
 }
 
 .nav-links {
@@ -251,6 +260,12 @@ a:hover { color: var(--primary-dark); }
     font-weight: 700;
     margin-bottom: .25rem;
     color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+.auth-logo-img {
+    border-radius: 10px;
 }
 .auth-card h1 {
     font-size: 1.5rem;

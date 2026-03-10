@@ -167,16 +167,15 @@ def admin_fix_routes():
 @settings_bp.route("/admin/domain-migration")
 @login_required
 def admin_domain_migration():
-    """Migriert alle CustomerSettings von @bewerbungswandler.de auf @systemautomatik.com
-    und legt neue Mailgun-Routen an.
-    Erfordert ?key=ADMIN_KEY (gesetzt über ADMIN_DIAGNOSE_KEY in Env-Variablen)."""
+    """Migriert alle CustomerSettings von einem alten Domain auf den aktuell konfigurierten MAILGUN_DOMAIN.
+    Erfordert ?key=ADMIN_DIAGNOSE_KEY&old_domain=alter-domain.com"""
     from .auth import repariere_mailgun_route
 
     expected_key = current_app.config.get("ADMIN_DIAGNOSE_KEY") or os.environ.get("ADMIN_DIAGNOSE_KEY")
     if not expected_key or request.args.get("key") != expected_key:
         return jsonify({"error": "Unauthorized – ?key=ADMIN_DIAGNOSE_KEY erforderlich"}), 401
 
-    old_domain = "bewerbungswandler.de"
+    old_domain = request.args.get("old_domain", "systemautomatik.com")
     new_domain = current_app.config.get("MAILGUN_DOMAIN", "systemautomatik.com")
 
     migrated = []

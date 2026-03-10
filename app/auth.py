@@ -80,7 +80,14 @@ def register():
         db.session.commit()
 
         # Mailgun-Route anlegen
-        _create_mailgun_route(user.id, settings.eigene_email)
+        route_result = _create_mailgun_route(user.id, settings.eigene_email)
+        if route_result and not route_result.get("ok"):
+            flash(
+                f"Konto erstellt, aber E-Mail-Empfang konnte nicht eingerichtet werden "
+                f"({route_result.get('error', 'Unbekannter Fehler')}). "
+                "Bitte unter Einstellungen → 'Route reparieren' erneut versuchen.",
+                "warning",
+            )
 
         login_user(user)
         flash("Willkommen! Ihr Konto wurde erstellt. Bitte konfigurieren Sie Ihre Einstellungen.", "success")
@@ -99,17 +106,17 @@ def _create_mailgun_route(user_id: int, email_address: str):
 
     if not api_key:
         current_app.logger.warning("MAILGUN_API_KEY nicht gesetzt – Route nicht angelegt.")
-        return
+        return {"ok": False, "error": "MAILGUN_API_KEY nicht gesetzt"}
 
     # Prüfe ob bereits eine Catch-All-Route existiert
     if _catchall_route_exists():
         current_app.logger.info(
             f"Catch-All-Route existiert bereits – keine einzelne Route für {email_address} nötig."
         )
-        return
+        return {"ok": True}
 
     # Fallback: Einzelne Route anlegen (falls kein Catch-All)
-    _ensure_catchall_route()
+    return _ensure_catchall_route()
 
 
 def _catchall_route_exists() -> bool:

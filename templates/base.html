@@ -25,6 +25,9 @@
             <a href="{{ url_for('dashboard.index') }}" class="{% if request.endpoint == 'dashboard.index' or request.endpoint == 'dashboard.detail' %}active{% endif %}">
                 Dashboard
             </a>
+            <a href="{{ url_for('dashboard.tabelle') }}" class="{% if request.endpoint == 'dashboard.tabelle' or request.endpoint == 'dashboard.tabelle_export' %}active{% endif %}">
+                Tabelle
+            </a>
             <a href="{{ url_for('settings_bp.index') }}" class="{% if request.endpoint == 'settings_bp.index' %}active{% endif %}">
                 Einstellungen
             </a>

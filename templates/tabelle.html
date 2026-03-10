@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Tabelle – Bewerbercheck-Pro{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem;">
+    <h1>Bewerbertabelle</h1>
+    {% if applications %}
+    <a href="{{ url_for('dashboard.tabelle_export') }}" class="btn btn-outline">
+        ↓ CSV exportieren
+    </a>
+    {% endif %}
+</div>
+
+{% if applications %}
+<div class="table-wrapper" style="overflow-x:auto;">
+    <table class="applications-table" style="min-width:900px;">
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Score</th>
+                <th>Bewertung</th>
+                <th>Name</th>
+                <th>E-Mail</th>
+                <th>Telefon</th>
+                <th>Skills</th>
+                <th>Erfahrung</th>
+                <th>Ausbildung</th>
+                <th>Sprachen</th>
+                <th>Zusammenfassung</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in applications %}
+            <tr class="application-row clickable-row" onclick="window.location='{{ url_for('dashboard.detail', application_id=app.id) }}'">
+                <td class="date-cell" style="white-space:nowrap;">
+                    {{ app.eingegangen_am.strftime('%d.%m.%Y') if app.eingegangen_am else '–' }}
+                </td>
+                <td>
+                    {% if app.score is not none %}
+                    <span class="score-badge score-{{ 'high' if app.score >= 7 else ('mid' if app.score >= 4 else 'low') }}">
+                        {{ app.score }}/10
+                    </span>
+                    {% else %}
+                    <span class="score-badge score-low">–</span>
+                    {% endif %}
+                </td>
+                <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ app.score_begruendung or '' }}">
+                    {{ (app.score_begruendung or '–')[:60] }}{% if app.score_begruendung and app.score_begruendung|length > 60 %}…{% endif %}
+                </td>
+                <td class="name-cell" style="white-space:nowrap;">{{ app.bewerber_name or '(Unbekannt)' }}</td>
+                <td class="email-cell" style="white-space:nowrap;">{{ app.bewerber_email or '–' }}</td>
+                <td style="white-space:nowrap;">{{ app.telefon or '–' }}</td>
+                <td class="skills-cell">
+                    {% if app.skills %}
+                    {% for skill in app.skills.split(',')[:3] %}
+                    <span class="skill-tag">{{ skill.strip() }}</span>
+                    {% endfor %}
+                    {% if app.skills.split(',')|length > 3 %}
+                    <span class="skill-tag skill-more">+{{ app.skills.split(',')|length - 3 }}</span>
+                    {% endif %}
+                    {% else %}–{% endif %}
+                </td>
+                <td style="white-space:nowrap;">
+                    {% if app.berufserfahrung_jahre is not none %}{{ app.berufserfahrung_jahre|int }} J.{% else %}–{% endif %}
+                </td>
+                <td style="max-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ app.ausbildung or '' }}">
+                    {{ app.ausbildung or '–' }}
+                </td>
+                <td style="white-space:nowrap;">{{ app.sprachen or '–' }}</td>
+                <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ app.uebersetzter_text or '' }}">
+                    {{ (app.uebersetzter_text or '–')[:150] }}{% if app.uebersetzter_text and app.uebersetzter_text|length > 150 %}…{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<p style="margin-top:.75rem; font-size:.85rem; color:var(--gray-400);">
+    {{ applications|length }} Bewerbung{{ 'en' if applications|length != 1 else '' }} &middot;
+    Klicken Sie auf eine Zeile für Details
+</p>
+
+{% else %}
+<div class="onboarding-card" style="text-align:center; padding:3rem 2rem;">
+    <div class="empty-icon" style="font-size:3rem; margin-bottom:1rem;">📋</div>
+    <h2>Noch keine Bewerbungen</h2>
+    <p style="color:var(--gray-500); margin:.75rem 0 1.5rem;">
+        Sobald Bewerbungen per E-Mail eingehen und verarbeitet wurden, erscheinen sie hier.
+    </p>
+    <a href="{{ url_for('settings_bp.index') }}" class="btn btn-primary">Einstellungen öffnen</a>
+</div>
+{% endif %}
+{% endblock %}

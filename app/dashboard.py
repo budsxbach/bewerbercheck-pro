@@ -1,5 +1,7 @@
+import csv
+import io
 import logging
-from flask import Blueprint, render_template, redirect, url_for, abort, flash, request
+from flask import Blueprint, render_template, redirect, url_for, abort, flash, request, make_response
 from flask_login import login_required, current_user
 
 from .models import db, Application, CustomerSettings
@@ -41,6 +43,53 @@ def index():
         pagination=pagination,
         fehlerhafte=fehlerhafte,
     )
+
+
+@dashboard_bp.route("/tabelle")
+@login_required
+def tabelle():
+    if not current_user.hat_zugang:
+        return redirect(url_for("auth.stripe_checkout"))
+    applications = Application.query.filter_by(
+        user_id=current_user.id, verarbeitet=True
+    ).order_by(Application.score.desc().nullslast(), Application.eingegangen_am.desc()).all()
+    return render_template("tabelle.html", applications=applications)
+
+
+@dashboard_bp.route("/tabelle/export.csv")
+@login_required
+def tabelle_export():
+    if not current_user.hat_zugang:
+        return redirect(url_for("auth.stripe_checkout"))
+    applications = Application.query.filter_by(
+        user_id=current_user.id, verarbeitet=True
+    ).order_by(Application.score.desc().nullslast(), Application.eingegangen_am.desc()).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=";")
+    writer.writerow([
+        "Eingegangen am", "Score (1-10)", "Bewertung", "Name", "E-Mail",
+        "Telefon", "Skills", "Erfahrung (Jahre)", "Ausbildung", "Sprachen", "Zusammenfassung",
+    ])
+    for app in applications:
+        writer.writerow([
+            app.eingegangen_am.strftime("%d.%m.%Y %H:%M") if app.eingegangen_am else "",
+            app.score or "",
+            app.score_begruendung or "",
+            app.bewerber_name or "",
+            app.bewerber_email or "",
+            app.telefon or "",
+            app.skills or "",
+            app.berufserfahrung_jahre if app.berufserfahrung_jahre is not None else "",
+            app.ausbildung or "",
+            app.sprachen or "",
+            (app.uebersetzter_text or "")[:150],
+        ])
+
+    response = make_response("\ufeff" + output.getvalue())
+    response.headers["Content-Type"] = "text/csv; charset=utf-8"
+    response.headers["Content-Disposition"] = "attachment; filename=bewerbungen.csv"
+    return response
 
 
 @dashboard_bp.route("/bewerbung/<int:application_id>")

@@ -6,15 +6,14 @@
     <h1>Einstellungen</h1>
 </div>
 
-<!-- Setup-Fortschritt -->
-{% set has_sheets = settings.sheets_url %}
+<!-- Setup-Fortschritt (Google Sheets zählt nicht als Pflichtschritt) -->
 {% set has_criteria = settings.stellenbeschreibung %}
-{% set done_count = 1 + (1 if has_sheets else 0) + (1 if has_criteria else 0) %}
+{% set done_count = 1 + (1 if has_criteria else 0) %}
 <div class="setup-progress">
     <div class="progress-bar">
-        <div class="progress-fill" style="width: {{ (done_count / 3 * 100)|int }}%"></div>
+        <div class="progress-fill" style="width: {{ (done_count / 2 * 100)|int }}%"></div>
     </div>
-    <span class="progress-label">Setup: {{ done_count }}/3 erledigt</span>
+    <span class="progress-label">Setup: {{ done_count }}/2 erledigt</span>
 </div>
 
 <!-- Bewerbungs-E-Mail -->
@@ -48,13 +47,16 @@
 <!-- Google Sheets -->
 <div class="card settings-card">
     <div class="settings-header">
-        <h2>📊 Google Sheets Verknüpfung</h2>
-        {% if has_sheets %}
+        <h2>📊 Google Sheets (Optional)</h2>
+        {% if settings.sheets_url %}
         <span class="check-done">✓ Verknüpft</span>
         {% else %}
-        <span class="check-pending">Offen</span>
+        <span class="check-pending">Optional</span>
         {% endif %}
     </div>
+    <p style="font-size:.875rem; color:var(--gray-500); margin-bottom:1rem;">
+        Alternativ finden Sie alle Bewerbungen direkt unter <a href="{{ url_for('dashboard.tabelle') }}">Tabelle</a> – ohne Google-Konto.
+    </p>
     <div class="setup-steps">
         <p><strong>Schritt 1:</strong> Öffnen Sie Ihr Google Sheet und klicken Sie auf „Teilen".</p>
         <p>

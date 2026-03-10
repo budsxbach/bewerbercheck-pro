@@ -147,9 +147,12 @@
             <div class="step-check">{{ '✓' if has_sheets else '2' }}</div>
             <div class="step-content">
                 <strong>Google Sheet verknüpfen</strong>
-                <p>{{ 'Verknüpft ✓' if has_sheets else 'Noch nicht konfiguriert.' }}</p>
+                <p>{{ 'Verknüpft ✓' if has_sheets else 'Optional – für automatischen Export.' }}</p>
                 {% if not has_sheets %}
-                <a href="{{ url_for('settings_bp.index') }}" class="btn btn-sm btn-primary" style="margin-top:.5rem">Jetzt einrichten</a>
+                <a href="{{ url_for('settings_bp.index') }}" class="btn btn-sm btn-outline" style="margin-top:.5rem">Einrichten</a>
+                <p style="font-size:.8rem; color:var(--gray-400); margin:.5rem 0 0;">
+                    Oder: Nutzen Sie die eingebaute <a href="{{ url_for('dashboard.tabelle') }}">Tabelle</a> – ohne Google-Konto.
+                </p>
                 {% endif %}
             </div>
         </div>

@@ -22,6 +22,7 @@ class User(UserMixin, db.Model):
     erstellt_am = db.Column(db.DateTime, default=datetime.utcnow)
     reset_token = db.Column(db.String(255))
     reset_token_ablauf = db.Column(db.DateTime)
+    abo_start_datum = db.Column(db.DateTime, nullable=True)
 
     settings = db.relationship("CustomerSettings", backref="user", uselist=False, cascade="all, delete-orphan")
     applications = db.relationship("Application", backref="user", lazy="dynamic", cascade="all, delete-orphan")
@@ -40,6 +41,14 @@ class User(UserMixin, db.Model):
         if self.testphase_aktiv and self.testphase_enddatum:
             return datetime.utcnow() < self.testphase_enddatum
         return False
+
+    @property
+    def geld_zurueck_berechtigt(self):
+        """True wenn erste Zahlung < 7 Tage her und Abo aktiv."""
+        if not self.abo_aktiv or not self.abo_start_datum:
+            return False
+        delta = datetime.utcnow() - self.abo_start_datum
+        return delta.days < 7
 
     @property
     def testphase_tage_uebrig(self):

@@ -107,6 +107,10 @@ def create_app():
     def datenschutz():
         return render_template("datenschutz.html")
 
+    @app.route("/rueckgaberecht")
+    def rueckgaberecht():
+        return render_template("rueckgaberecht.html")
+
     # ─── Health-Check (keine Details nach außen) ─────────────────
     @app.route("/health")
     def health():
@@ -141,6 +145,7 @@ Sitemap: {base}/sitemap.xml
             (f"{base}/start", "weekly", "1.0"),
             (f"{base}/impressum", "monthly", "0.3"),
             (f"{base}/datenschutz", "monthly", "0.3"),
+            (f"{base}/rueckgaberecht", "monthly", "0.3"),
             (f"{base}/login", "monthly", "0.5"),
             (f"{base}/register", "monthly", "0.5"),
         ]
@@ -172,6 +177,7 @@ Sitemap: {base}/sitemap.xml
 
         # Neue Spalten zu bestehenden Tabellen hinzufügen (db.create_all() macht das nicht)
         _add_column_if_missing(db, "users", "testphase_enddatum", "TIMESTAMP")
+        _add_column_if_missing(db, "users", "abo_start_datum", "TIMESTAMP")
         _add_column_if_missing(db, "applications", "sheets_geschrieben", "BOOLEAN DEFAULT FALSE")
         _add_column_if_missing(db, "applications", "mailgun_message_id", "VARCHAR(255) UNIQUE")
         _add_column_if_missing(db, "customer_settings", "email_benachrichtigung", "BOOLEAN DEFAULT TRUE")

@@ -321,6 +321,11 @@ def stripe_checkout():
             subscription_data={"trial_period_days": 14},
             success_url=f"{app_url}/abo/erfolg?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{app_url}/dashboard",
+            custom_text={
+                "submit": {
+                    "message": "Mit dem Kauf stimmen Sie unserer 7-Tage-Rückerstattungsrichtlinie zu."
+                }
+            },
         )
         return redirect(session.url, code=303)
     except Exception as e:
@@ -425,11 +430,42 @@ def _handle_payment_failed(invoice):
 
 
 def _handle_payment_succeeded(invoice):
-    """Re-aktiviert Abo nach zuvor fehlgeschlagener Zahlung."""
+    """Re-aktiviert Abo nach zuvor fehlgeschlagener Zahlung. Setzt abo_start_datum beim ersten Payment."""
     user = User.query.filter_by(stripe_customer_id=invoice["customer"]).first()
     if user:
         user.abo_aktiv = True
+        if not user.abo_start_datum:
+            user.abo_start_datum = datetime.utcnow()
         db.session.commit()
+
+
+@auth_bp.route("/abo/rueckerstattung", methods=["POST"])
+@login_required
+def stripe_rueckerstattung():
+    """Vollständige Rückerstattung innerhalb der 3-Tage-Garantie."""
+    if not current_user.geld_zurueck_berechtigt:
+        flash("Die 3-Tage-Frist ist abgelaufen.", "danger")
+        return redirect(url_for("settings_bp.index"))
+
+    stripe.api_key = current_app.config["STRIPE_SECRET_KEY"]
+
+    try:
+        invoices = stripe.Invoice.list(customer=current_user.stripe_customer_id, limit=1)
+        charge_id = invoices.data[0].charge
+
+        stripe.Refund.create(charge=charge_id)
+        stripe.Subscription.cancel(current_user.stripe_subscription_id)
+
+        current_user.abo_aktiv = False
+        current_user.abo_start_datum = None
+        db.session.commit()
+
+        flash("Ihre Rückerstattung wurde eingeleitet. Das Geld erscheint in 5–10 Werktagen.", "success")
+    except Exception as e:
+        current_app.logger.error(f"Rückerstattungsfehler: {e}")
+        flash("Fehler bei der Rückerstattung. Bitte kontaktieren Sie den Support.", "danger")
+
+    return redirect(url_for("settings_bp.index"))
 
 
 def _handle_trial_will_end(subscription):

@@ -114,6 +114,21 @@
     <a href="{{ url_for('auth.stripe_portal') }}" class="btn btn-outline">
         Abo verwalten / kündigen
     </a>
+    {% if current_user.geld_zurueck_berechtigt %}
+    <div class="refund-banner" style="margin-top: 1.25rem; padding: 1rem; background: var(--success-light, #f0fdf4); border: 1px solid rgba(22,163,74,.2); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem;">
+        <p style="margin: 0; color: var(--gray-700); font-size: .9rem;">
+            <strong>✓ 7-Tage-Geld-zurück-Garantie aktiv</strong><br>
+            <span style="color: var(--gray-500); font-size: .85rem;">Sie können innerhalb der ersten 7 Tage eine vollständige Rückerstattung beantragen.</span>
+        </p>
+        <form method="POST" action="{{ url_for('auth.stripe_rueckerstattung') }}"
+              onsubmit="return confirm('Möchten Sie wirklich eine vollständige Rückerstattung beantragen? Ihr Abo wird sofort gekündigt.')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger btn-sm">
+                Rückerstattung beantragen
+            </button>
+        </form>
+    </div>
+    {% endif %}
     {% elif current_user.hat_zugang %}
     <p class="status-trial">🎯 Testphase aktiv – noch {{ current_user.testphase_tage_uebrig }} Tage.</p>
     <a href="{{ url_for('auth.stripe_checkout') }}" class="btn btn-primary">

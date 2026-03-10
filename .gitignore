@@ -18,6 +18,14 @@ bewerbercheck-pro-*.json
 DEPLOY-CHECKLIST.md
 *.exe
 .claude/
+stripe_backup_code.txt
+static/_.github.io.crt
+(Hostinger)*Name.txt
+
+# Branding-Assets (lokal, nicht deployen)
+Logo_Branding.png
+icon_stripe.png
+logo_stripe.png
 
 # Playwright MCP Test-Daten
 .playwright-mcp/
@@ -26,3 +34,5 @@ DEPLOY-CHECKLIST.md
 Zugangsdaten.png
 einstellungen.png
 landing.png
+test-*.png
+unternehmenswebseite/

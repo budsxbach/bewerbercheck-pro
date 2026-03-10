@@ -7,6 +7,16 @@ load_dotenv()
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "change-this-in-production")
     _db_url = os.environ.get("DATABASE_URL", "postgresql://localhost/bewerbercheck")
+
+    # ── Sichere Cookie-Einstellungen ──────────────────────────────
+    # Cookies nur über HTTPS senden (in Produktion, wenn APP_URL https ist)
+    _is_production = os.environ.get("APP_URL", "http://localhost:5000").startswith("https://")
+    SESSION_COOKIE_SECURE = _is_production
+    SESSION_COOKIE_HTTPONLY = True   # Kein JS-Zugriff auf Session-Cookie
+    SESSION_COOKIE_SAMESITE = "Lax"  # CSRF-Schutz: keine Cross-Site-Requests
+    REMEMBER_COOKIE_SECURE = _is_production
+    REMEMBER_COOKIE_HTTPONLY = True
+    PREFERRED_URL_SCHEME = "https" if _is_production else "http"
     # Railway sometimes provides postgres:// (legacy) — SQLAlchemy requires postgresql://
     if _db_url.startswith("postgres://"):
         _db_url = _db_url.replace("postgres://", "postgresql://", 1)

@@ -5,6 +5,7 @@ from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .models import db, User
 
@@ -30,6 +31,10 @@ def _add_column_if_missing(db, table, column, col_type):
 def create_app():
     app = Flask(__name__, template_folder="../templates", static_folder="../static")
     app.config.from_object("config.Config")
+
+    # ProxyFix: Railway sitzt hinter einem Reverse-Proxy → X-Forwarded-Proto vertrauen
+    # Ohne das würde request.scheme immer "http" liefern, auch bei HTTPS-Anfragen
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
     # Extensions
     db.init_app(app)
@@ -77,13 +82,51 @@ def create_app():
         if view_func:
             app.view_functions[endpoint_name] = limiter.limit(limit_string)(view_func)
 
+    # ─── HTTPS erzwingen (nur in Produktion) ─────────────────────
+    @app.before_request
+    def erzwinge_https():
+        is_production = app.config.get("APP_URL", "").startswith("https://")
+        if is_production and request.headers.get("X-Forwarded-Proto") == "http":
+            # GET/HEAD: 301 Permanent Redirect
+            # POST/PUT/etc.: 308 Permanent Redirect (Methode + Body bleiben erhalten)
+            code = 301 if request.method in ("GET", "HEAD") else 308
+            return redirect(request.url.replace("http://", "https://", 1), code=code)
+
     # ─── Security Headers ────────────────────────────────────────
     @app.after_request
     def set_security_headers(response):
+        is_production = app.config.get("APP_URL", "").startswith("https://")
+
+        # HSTS: Browser merken sich, dass diese Domain nur HTTPS nutzt (1 Jahr)
+        if is_production:
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains"
+            )
+
+        # Content Security Policy: kontrolliert, was der Browser laden darf
+        # unsafe-inline nötig für die Inline-<script>-Blöcke in den Templates
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://plausible.io; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data:; "
+            "font-src 'self'; "
+            "connect-src 'self' https://plausible.io; "
+            "frame-ancestors 'none'; "
+            "base-uri 'self'; "
+            "form-action 'self';"
+        )
+
+        # Deaktiviert Browser-Features, die die App nicht braucht
+        response.headers["Permissions-Policy"] = (
+            "camera=(), microphone=(), geolocation=(), payment=(), "
+            "usb=(), interest-cohort=()"
+        )
+
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
         return response
 
     # ─── Startseite ──────────────────────────────────────────────

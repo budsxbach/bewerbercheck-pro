@@ -1,22 +1,35 @@
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY", "change-this-in-production")
+    # SECRET_KEY: in Produktion MUSS diese Env-Variable gesetzt sein
+    _secret_key = os.environ.get("SECRET_KEY")
+    _is_prod = os.environ.get("APP_URL", "http://localhost:5000").startswith("https://")
+    if not _secret_key and _is_prod:
+        raise RuntimeError(
+            "SECRET_KEY Umgebungsvariable ist nicht gesetzt! "
+            "Die Anwendung kann in Produktion nicht ohne sicheren SECRET_KEY starten."
+        )
+    SECRET_KEY = _secret_key or "dev-only-insecure-key-do-not-use-in-production"
+
     _db_url = os.environ.get("DATABASE_URL", "postgresql://localhost/bewerbercheck")
 
     # ── Sichere Cookie-Einstellungen ──────────────────────────────
-    # Cookies nur über HTTPS senden (in Produktion, wenn APP_URL https ist)
-    _is_production = os.environ.get("APP_URL", "http://localhost:5000").startswith("https://")
+    _is_production = _is_prod  # Alias (bereits oben definiert)
     SESSION_COOKIE_SECURE = _is_production
-    SESSION_COOKIE_HTTPONLY = True   # Kein JS-Zugriff auf Session-Cookie
-    SESSION_COOKIE_SAMESITE = "Lax"  # CSRF-Schutz: keine Cross-Site-Requests
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
     REMEMBER_COOKIE_SECURE = _is_production
     REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_DURATION = timedelta(days=30)  # Statt Standard 365 Tage
     PREFERRED_URL_SCHEME = "https" if _is_production else "http"
+
+    # ── Request-Größe begrenzen (DoS-Schutz für Datei-Uploads) ───
+    MAX_CONTENT_LENGTH = 25 * 1024 * 1024  # 25 MB
     # Railway sometimes provides postgres:// (legacy) — SQLAlchemy requires postgresql://
     if _db_url.startswith("postgres://"):
         _db_url = _db_url.replace("postgres://", "postgresql://", 1)

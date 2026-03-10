@@ -6,8 +6,12 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_mail import Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from .models import db, User, CustomerSettings, TESTPHASE_TAGE
+
+# Einmalig beim Serverstart berechnet – verhindert Timing-Angriffe im Login
+_DUMMY_HASH = generate_password_hash("timing-protection-constant-never-matches")
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -220,7 +224,14 @@ def login():
         passwort = request.form.get("passwort", "")
 
         user = User.query.filter_by(email=email).first()
-        if user and user.check_password(passwort):
+        if user:
+            password_ok = user.check_password(passwort)
+        else:
+            # Dummy-bcrypt-Check: konstante Antwortzeit verhindert E-Mail-Enumeration
+            check_password_hash(_DUMMY_HASH, passwort)
+            password_ok = False
+
+        if user and password_ok:
             login_user(user, remember=True)
             next_page = request.args.get("next")
             if not _is_safe_redirect_url(next_page):
@@ -251,6 +262,10 @@ def passwort_vergessen():
         if user:
             s = _get_serializer()
             token = s.dumps(user.email, salt="pw-reset")
+            # Token in DB speichern → kann nach Verwendung invalidiert werden
+            user.reset_token = token
+            user.reset_token_ablauf = datetime.utcnow() + timedelta(hours=1)
+            db.session.commit()
             reset_url = url_for("auth.passwort_reset", token=token, _external=True)
             _send_reset_email(user.email, reset_url)
 
@@ -272,12 +287,19 @@ def passwort_reset(token):
 
     user = User.query.filter_by(email=email).first_or_404()
 
+    # Token-Einmal-Verwendung prüfen: bereits benutzte Tokens sind invalidiert
+    if user.reset_token != token:
+        flash("Reset-Link wurde bereits verwendet oder ist ungültig.", "danger")
+        return redirect(url_for("auth.passwort_vergessen"))
+
     if request.method == "POST":
         passwort = request.form.get("passwort", "")
         if len(passwort) < 8:
             flash("Passwort muss mindestens 8 Zeichen lang sein.", "danger")
         else:
             user.set_password(passwort)
+            user.reset_token = None         # Token invalidieren nach Verwendung
+            user.reset_token_ablauf = None
             db.session.commit()
             flash("Passwort erfolgreich geändert. Bitte einloggen.", "success")
             return redirect(url_for("auth.login"))
@@ -442,23 +464,26 @@ def _handle_payment_succeeded(invoice):
 @auth_bp.route("/abo/rueckerstattung", methods=["POST"])
 @login_required
 def stripe_rueckerstattung():
-    """Vollständige Rückerstattung innerhalb der 3-Tage-Garantie."""
-    if not current_user.geld_zurueck_berechtigt:
-        flash("Die 3-Tage-Frist ist abgelaufen.", "danger")
+    """Vollständige Rückerstattung innerhalb der 7-Tage-Garantie."""
+    # Atomare Prüfung: abo_aktiv=True als Bedingung verhindert Race Condition
+    user = User.query.filter_by(id=current_user.id, abo_aktiv=True).first()
+    if not user or not user.geld_zurueck_berechtigt:
+        flash("Die 7-Tage-Frist ist abgelaufen oder kein aktives Abonnement.", "danger")
         return redirect(url_for("settings_bp.index"))
+
+    # Abo sofort deaktivieren VOR Stripe-Calls (verhindert Doppel-Refund bei Race Condition)
+    user.abo_aktiv = False
+    user.abo_start_datum = None
+    db.session.commit()
 
     stripe.api_key = current_app.config["STRIPE_SECRET_KEY"]
 
     try:
-        invoices = stripe.Invoice.list(customer=current_user.stripe_customer_id, limit=1)
+        invoices = stripe.Invoice.list(customer=user.stripe_customer_id, limit=1)
         charge_id = invoices.data[0].charge
 
         stripe.Refund.create(charge=charge_id)
-        stripe.Subscription.cancel(current_user.stripe_subscription_id)
-
-        current_user.abo_aktiv = False
-        current_user.abo_start_datum = None
-        db.session.commit()
+        stripe.Subscription.cancel(user.stripe_subscription_id)
 
         flash("Ihre Rückerstattung wurde eingeleitet. Das Geld erscheint in 5–10 Werktagen.", "success")
     except Exception as e:

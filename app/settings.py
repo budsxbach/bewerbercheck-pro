@@ -79,6 +79,7 @@ def route_reparieren():
 
 
 @settings_bp.route("/admin/mailgun-diagnose")
+@login_required
 def admin_mailgun_diagnose():
     """Admin-Diagnose: Zeigt alle Mailgun-Routen und ob sie zur aktuellen APP_URL passen.
     Erfordert ?key=ADMIN_KEY (gesetzt über ADMIN_DIAGNOSE_KEY in Env-Variablen)."""
@@ -143,6 +144,7 @@ def admin_mailgun_diagnose():
 
 
 @settings_bp.route("/admin/fix-routes")
+@login_required
 def admin_fix_routes():
     """Erstellt eine Catch-All-Route für alle E-Mails an @domain.
     Erfordert ?key=ADMIN_KEY (gesetzt über ADMIN_DIAGNOSE_KEY in Env-Variablen)."""
@@ -163,6 +165,7 @@ def admin_fix_routes():
 
 
 @settings_bp.route("/admin/domain-migration")
+@login_required
 def admin_domain_migration():
     """Migriert alle CustomerSettings von @bewerbungswandler.de auf @systemautomatik.com
     und legt neue Mailgun-Routen an.

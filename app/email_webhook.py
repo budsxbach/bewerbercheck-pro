@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import io
 import logging
+import time
 from flask import Blueprint, request, current_app
 from flask_mail import Message
 
@@ -131,7 +132,7 @@ def _sende_bewerbungsbenachrichtigung(user, application):
 
 
 def _verify_mailgun_signature(req) -> bool:
-    """Prüft die HMAC-Signatur von Mailgun."""
+    """Prüft die HMAC-Signatur von Mailgun inkl. Timestamp-Frische (Replay-Schutz)."""
     signing_key = current_app.config.get("MAILGUN_WEBHOOK_SIGNING_KEY")
     if not signing_key:
         app_url = current_app.config.get("APP_URL", "")
@@ -145,37 +146,59 @@ def _verify_mailgun_signature(req) -> bool:
     token = req.form.get("token", "")
     signature = req.form.get("signature", "")
 
+    # Timestamp-Frische: maximal 5 Minuten alt (Replay-Angriff-Schutz)
+    try:
+        ts_int = int(timestamp)
+        if abs(time.time() - ts_int) > 300:
+            logger.warning(f"Mailgun Webhook: Timestamp zu alt ({timestamp}) – möglicher Replay-Angriff.")
+            return False
+    except (ValueError, TypeError):
+        logger.warning("Mailgun Webhook: Ungültiger Timestamp-Wert – Anfrage abgelehnt.")
+        return False
+
     value = f"{timestamp}{token}".encode("utf-8")
-    expected = hmac.new(signing_key.encode("utf-8"), value, hashlib.sha256).hexdigest()
+    # hmac.digest() ist sicherer und performanter als hmac.new().hexdigest()
+    expected = hmac.digest(signing_key.encode("utf-8"), value, hashlib.sha256).hex()
     return hmac.compare_digest(expected, signature)
 
 
+_MAX_ANHAENGE = 5               # Maximale Anzahl Anhänge pro E-Mail
+_MAX_ANHANG_BYTES = 10 * 1024 * 1024  # 10 MB pro Anhang
+_MAX_TEXT_ZEICHEN = 50_000      # Max. Zeichen pro extrahiertem Text
+
+
 def _extrahiere_anhaenge(req) -> list[str]:
-    """Extrahiert Text aus PDF-Anhängen der E-Mail."""
+    """Extrahiert Text aus PDF-Anhängen der E-Mail (mit Größen- und Anzahl-Limits)."""
     texte = []
-    # Mailgun sendet Anhänge als attachment-1, attachment-2, ...
-    i = 1
-    while True:
+    for i in range(1, _MAX_ANHAENGE + 1):
         datei = req.files.get(f"attachment-{i}")
         if not datei:
             break
-        i += 1
 
         dateiname = datei.filename or ""
+
+        # Größe prüfen ohne die Datei vollständig in den RAM zu laden
+        datei.seek(0, 2)
+        file_size = datei.tell()
+        datei.seek(0)
+        if file_size > _MAX_ANHANG_BYTES:
+            logger.warning(f"Anhang {dateiname!r} zu groß ({file_size} Bytes) – übersprungen.")
+            continue
+
         if dateiname.lower().endswith(".pdf"):
             try:
                 pdf_text = _pdf_zu_text(datei.read())
                 if pdf_text.strip():
-                    texte.append(pdf_text)
+                    texte.append(pdf_text[:_MAX_TEXT_ZEICHEN])
             except Exception as e:
-                logger.warning(f"PDF-Extraktion fehlgeschlagen für {dateiname}: {e}")
-        elif dateiname.lower().endswith((".doc", ".docx", ".txt")):
+                logger.warning(f"PDF-Extraktion fehlgeschlagen für {dateiname!r}: {e}")
+        elif dateiname.lower().endswith(".txt"):
             try:
                 text = datei.read().decode("utf-8", errors="ignore")
                 if text.strip():
-                    texte.append(text)
+                    texte.append(text[:_MAX_TEXT_ZEICHEN])
             except Exception as e:
-                logger.warning(f"Text-Extraktion fehlgeschlagen für {dateiname}: {e}")
+                logger.warning(f"Text-Extraktion fehlgeschlagen für {dateiname!r}: {e}")
 
     return texte
 

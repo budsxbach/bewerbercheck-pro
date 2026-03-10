@@ -1,4 +1,5 @@
 import logging
+import re
 from flask import Flask, redirect, url_for, jsonify, render_template, request, make_response
 from flask_login import LoginManager
 from flask_mail import Mail
@@ -6,6 +7,12 @@ from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+_SAFE_SQL_IDENTIFIER = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+_ALLOWED_COL_TYPES = frozenset({
+    "TIMESTAMP", "BOOLEAN DEFAULT FALSE", "BOOLEAN DEFAULT TRUE",
+    "VARCHAR(255)", "VARCHAR(255) UNIQUE", "TEXT", "INTEGER",
+})
 
 from .models import db, User
 
@@ -18,7 +25,12 @@ logger = logging.getLogger(__name__)
 
 
 def _add_column_if_missing(db, table, column, col_type):
-    """Fügt eine Spalte hinzu, falls sie noch nicht existiert (ALTER TABLE)."""
+    """Fügt eine Spalte hinzu, falls sie noch nicht existiert (ALTER TABLE).
+    Whitelist-Validierung verhindert SQL-Injection durch unsichere Bezeichner."""
+    if not _SAFE_SQL_IDENTIFIER.match(table) or not _SAFE_SQL_IDENTIFIER.match(column):
+        raise ValueError(f"Ungültige SQL-Bezeichner: table={table!r}, column={column!r}")
+    if col_type not in _ALLOWED_COL_TYPES:
+        raise ValueError(f"Nicht erlaubter Spaltentyp: {col_type!r}")
     try:
         db.session.execute(db.text(
             f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"
@@ -78,6 +90,16 @@ def create_app():
 
     # Dekoriere die View-Funktionen mit Rate Limits
     for endpoint_name, limit_string in _auth_limits.items():
+        view_func = app.view_functions.get(endpoint_name)
+        if view_func:
+            app.view_functions[endpoint_name] = limiter.limit(limit_string)(view_func)
+
+    # Webhook-Endpunkte: globales Rate Limit (HMAC schützt bereits, aber Defense-in-Depth)
+    _webhook_limits = {
+        "email.email_webhook": "120 per minute",
+        "auth.stripe_webhook": "200 per minute",
+    }
+    for endpoint_name, limit_string in _webhook_limits.items():
         view_func = app.view_functions.get(endpoint_name)
         if view_func:
             app.view_functions[endpoint_name] = limiter.limit(limit_string)(view_func)

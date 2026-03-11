@@ -1,6 +1,7 @@
 import uuid
 import stripe
 from datetime import datetime, timedelta
+from app.models import _utcnow
 from urllib.parse import urlparse
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
@@ -63,7 +64,7 @@ def register():
         user = User(
             email=email,
             testphase_aktiv=True,
-            testphase_enddatum=datetime.utcnow() + timedelta(days=TESTPHASE_TAGE),
+            testphase_enddatum=_utcnow() + timedelta(days=TESTPHASE_TAGE),
         )
         user.set_password(passwort)
         db.session.add(user)
@@ -275,7 +276,7 @@ def passwort_vergessen():
             token = s.dumps(user.email, salt="pw-reset")
             # Token in DB speichern → kann nach Verwendung invalidiert werden
             user.reset_token = token
-            user.reset_token_ablauf = datetime.utcnow() + timedelta(hours=1)
+            user.reset_token_ablauf = _utcnow() + timedelta(hours=1)
             db.session.commit()
             reset_url = url_for("auth.passwort_reset", token=token, _external=True)
             _send_reset_email(user.email, reset_url)
@@ -470,7 +471,7 @@ def _handle_payment_succeeded(invoice):
     if user:
         user.abo_aktiv = True
         if not user.abo_start_datum:
-            user.abo_start_datum = datetime.utcnow()
+            user.abo_start_datum = _utcnow()
         db.session.commit()
 
 

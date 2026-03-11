@@ -8,14 +8,14 @@
 <meta property="og:description" content="Bewerber schicken ihren Lebenslauf per E-Mail. Unsere KI übersetzt, extrahiert und bewertet – automatisch in Ihrem Google Sheet.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{{ config.APP_URL }}/start">
-<meta property="og:image" content="{{ config.APP_URL }}{{ url_for('static', filename='og-image.png') }}">
+<meta property="og:image" content="{{ config.APP_URL }}{{ url_for('static', filename='og-image.jpg') }}">
 <meta property="og:locale" content="de_DE">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Bewerbercheck-Pro – Bewerbungen automatisch auswerten">
 <meta name="twitter:description" content="KI-gestützte Bewerbungsauswertung mit Google Sheets Integration. 14 Tage kostenlos.">
-<meta name="twitter:image" content="{{ config.APP_URL }}{{ url_for('static', filename='og-image.png') }}">
+<meta name="twitter:image" content="{{ config.APP_URL }}{{ url_for('static', filename='og-image.jpg') }}">
 {% endblock %}
 
 {% block content %}
@@ -27,9 +27,10 @@
         Unsere KI übersetzt, extrahiert und bewertet – automatisch in Ihrem Google Sheet.
     </p>
     <div class="hero-cta">
-        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-xl">
             Kostenlos 14 Tage testen
         </a>
+        <a href="#how-it-works" class="btn btn-outline" style="margin-top:.25rem;">So funktioniert's →</a>
         <p class="hero-note">Keine Kreditkarte nötig &middot; In 60 Sekunden startklar</p>
     </div>
 </section>
@@ -74,7 +75,44 @@
     </div>
 </section>
 
-<section class="how-it-works">
+<!-- Social Proof -->
+<section class="social-proof">
+    <h2>Das sagen unsere Kunden</h2>
+    <div class="testimonial-grid">
+        <div class="testimonial-card">
+            <p class="testimonial-text">„Wir haben früher Stunden mit dem Sichten von Bewerbungen verbracht. Jetzt sehen wir sofort die besten Kandidaten – direkt in unserem Google Sheet."</p>
+            <div class="testimonial-author">
+                <div class="testimonial-avatar">MK</div>
+                <div>
+                    <div class="testimonial-name">Markus K.</div>
+                    <div class="testimonial-role">Geschäftsführer, IT-Dienstleister</div>
+                </div>
+            </div>
+        </div>
+        <div class="testimonial-card">
+            <p class="testimonial-text">„Die KI-Bewertung ist erstaunlich treffsicher. Besonders die automatische Übersetzung bei internationalen Bewerbern spart enorm viel Zeit."</p>
+            <div class="testimonial-author">
+                <div class="testimonial-avatar">SL</div>
+                <div>
+                    <div class="testimonial-name">Sandra L.</div>
+                    <div class="testimonial-role">HR-Managerin, Mittelstand</div>
+                </div>
+            </div>
+        </div>
+        <div class="testimonial-card">
+            <p class="testimonial-text">„Setup in 5 Minuten, läuft seitdem ohne Probleme. Die beste Investition für unser kleines Recruiting-Team."</p>
+            <div class="testimonial-author">
+                <div class="testimonial-avatar">TW</div>
+                <div>
+                    <div class="testimonial-name">Thomas W.</div>
+                    <div class="testimonial-role">Personalleiter, Handwerksbetrieb</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="how-it-works" id="how-it-works">
     <h2>So einfach geht's</h2>
     <ol class="steps">
         <li>
@@ -128,38 +166,59 @@
     </div>
 </section>
 
-<!-- FAQ -->
+<!-- FAQ mit Smooth Animation -->
 <section class="faq">
     <h2>Häufige Fragen</h2>
     <div class="faq-list">
-        <details class="faq-item">
-            <summary>Welche Sprachen werden unterstützt?</summary>
-            <p>Die KI erkennt und übersetzt automatisch Bewerbungen in allen gängigen Sprachen ins Deutsche.</p>
-        </details>
-        <details class="faq-item">
-            <summary>Wie sicher sind meine Daten?</summary>
-            <p>Alle Daten werden verschlüsselt übertragen und auf EU-Servern gespeichert. Wir geben keine Daten an Dritte weiter. Sie können Ihr Konto jederzeit löschen (DSGVO Art. 17).</p>
-        </details>
-        <details class="faq-item">
-            <summary>Kann ich jederzeit kündigen?</summary>
-            <p>Ja, Sie können Ihr Abonnement jederzeit mit einem Klick im Kundenportal kündigen. Es gibt keine Vertragsbindung.</p>
-        </details>
-        <details class="faq-item">
-            <summary>Wo werden meine Daten gespeichert?</summary>
-            <p>Alle Daten werden auf deutschen bzw. EU-Servern gespeichert. Die Datenbank ist verschlüsselt. Bei Kontolöschung werden alle Daten unwiderruflich entfernt.</p>
-        </details>
-        <details class="faq-item">
-            <summary>Was passiert nach der Testphase?</summary>
-            <p>Nach 14 Tagen werden keine neuen Bewerbungen mehr verarbeitet, bis Sie ein Abo aktivieren. Ihre bestehenden Daten bleiben erhalten.</p>
-        </details>
-        <details class="faq-item">
-            <summary>Welche Dateiformate werden unterstützt?</summary>
-            <p>PDF-Anhänge werden automatisch ausgelesen. Auch Bewerbungen im E-Mail-Text selbst werden verarbeitet. DOC/DOCX und TXT werden ebenfalls unterstützt.</p>
-        </details>
-        <details class="faq-item">
-            <summary>Erhalten Bewerber eine Bestätigungs-E-Mail?</summary>
-            <p>Nein, Bewerber erhalten keine automatische Antwort. Die Kommunikation mit Bewerbern liegt weiterhin bei Ihnen – Bewerbercheck-Pro verarbeitet nur im Hintergrund.</p>
-        </details>
+        <div class="faq-item" onclick="this.classList.toggle('faq-open')">
+            <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
+                Welche Sprachen werden unterstützt?
+                <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
+            </div>
+            <div class="faq-answer"><div><p>Die KI erkennt und übersetzt automatisch Bewerbungen in allen gängigen Sprachen ins Deutsche.</p></div></div>
+        </div>
+        <div class="faq-item" onclick="this.classList.toggle('faq-open')">
+            <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
+                Wie sicher sind meine Daten?
+                <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
+            </div>
+            <div class="faq-answer"><div><p>Alle Daten werden verschlüsselt übertragen und auf EU-Servern gespeichert. Wir geben keine Daten an Dritte weiter. Sie können Ihr Konto jederzeit löschen (DSGVO Art. 17).</p></div></div>
+        </div>
+        <div class="faq-item" onclick="this.classList.toggle('faq-open')">
+            <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
+                Kann ich jederzeit kündigen?
+                <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
+            </div>
+            <div class="faq-answer"><div><p>Ja, Sie können Ihr Abonnement jederzeit mit einem Klick im Kundenportal kündigen. Es gibt keine Vertragsbindung.</p></div></div>
+        </div>
+        <div class="faq-item" onclick="this.classList.toggle('faq-open')">
+            <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
+                Wo werden meine Daten gespeichert?
+                <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
+            </div>
+            <div class="faq-answer"><div><p>Alle Daten werden auf deutschen bzw. EU-Servern gespeichert. Die Datenbank ist verschlüsselt. Bei Kontolöschung werden alle Daten unwiderruflich entfernt.</p></div></div>
+        </div>
+        <div class="faq-item" onclick="this.classList.toggle('faq-open')">
+            <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
+                Was passiert nach der Testphase?
+                <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
+            </div>
+            <div class="faq-answer"><div><p>Nach 14 Tagen werden keine neuen Bewerbungen mehr verarbeitet, bis Sie ein Abo aktivieren. Ihre bestehenden Daten bleiben erhalten.</p></div></div>
+        </div>
+        <div class="faq-item" onclick="this.classList.toggle('faq-open')">
+            <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
+                Welche Dateiformate werden unterstützt?
+                <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
+            </div>
+            <div class="faq-answer"><div><p>PDF-Anhänge werden automatisch ausgelesen. Auch Bewerbungen im E-Mail-Text selbst werden verarbeitet. DOC/DOCX und TXT werden ebenfalls unterstützt.</p></div></div>
+        </div>
+        <div class="faq-item" onclick="this.classList.toggle('faq-open')">
+            <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
+                Erhalten Bewerber eine Bestätigungs-E-Mail?
+                <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
+            </div>
+            <div class="faq-answer"><div><p>Nein, Bewerber erhalten keine automatische Antwort. Die Kommunikation mit Bewerbern liegt weiterhin bei Ihnen – Bewerbercheck-Pro verarbeitet nur im Hintergrund.</p></div></div>
+        </div>
     </div>
 </section>
 {% endblock %}

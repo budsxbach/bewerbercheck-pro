@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -6,6 +6,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 TESTPHASE_TAGE = 14
 
 db = SQLAlchemy()
+
+
+def _utcnow():
+    """UTC-Zeitstempel ohne Deprecation-Warning (Python 3.12+), naive Datetime für DB-Kompatibilität."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class User(UserMixin, db.Model):
@@ -19,7 +24,7 @@ class User(UserMixin, db.Model):
     abo_aktiv = db.Column(db.Boolean, default=False, nullable=False)
     testphase_aktiv = db.Column(db.Boolean, default=True, nullable=False)
     testphase_enddatum = db.Column(db.DateTime)
-    erstellt_am = db.Column(db.DateTime, default=datetime.utcnow)
+    erstellt_am = db.Column(db.DateTime, default=_utcnow)
     reset_token = db.Column(db.String(255))
     reset_token_ablauf = db.Column(db.DateTime)
     abo_start_datum = db.Column(db.DateTime, nullable=True)
@@ -39,7 +44,7 @@ class User(UserMixin, db.Model):
         if self.abo_aktiv:
             return True
         if self.testphase_aktiv and self.testphase_enddatum:
-            return datetime.utcnow() < self.testphase_enddatum
+            return _utcnow() < self.testphase_enddatum
         return False
 
     @property
@@ -47,7 +52,7 @@ class User(UserMixin, db.Model):
         """True wenn erste Zahlung < 7 Tage her und Abo aktiv."""
         if not self.abo_aktiv or not self.abo_start_datum:
             return False
-        delta = datetime.utcnow() - self.abo_start_datum
+        delta = _utcnow() - self.abo_start_datum
         return delta.days < 7
 
     @property
@@ -55,7 +60,7 @@ class User(UserMixin, db.Model):
         """Verbleibende Tage der Testphase (0 wenn abgelaufen)."""
         if not self.testphase_enddatum:
             return 0
-        delta = self.testphase_enddatum - datetime.utcnow()
+        delta = self.testphase_enddatum - _utcnow()
         return max(0, delta.days)
 
 
@@ -70,7 +75,7 @@ class CustomerSettings(db.Model):
     stellenbeschreibung = db.Column(db.Text)
     bewertungskriterien = db.Column(db.Text)
     email_benachrichtigung = db.Column(db.Boolean, default=True, nullable=False)
-    aktualisiert_am = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    aktualisiert_am = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
 
 class Application(db.Model):
@@ -89,7 +94,7 @@ class Application(db.Model):
     score_begruendung = db.Column(db.Text)
     original_email_text = db.Column(db.Text)
     uebersetzter_text = db.Column(db.Text)    # Ins Deutsche übersetzter Volltext
-    eingegangen_am = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    eingegangen_am = db.Column(db.DateTime, default=_utcnow, index=True)
     verarbeitet = db.Column(db.Boolean, default=False)
     sheets_geschrieben = db.Column(db.Boolean, default=False)
     fehler = db.Column(db.Text)               # Falls KI-Verarbeitung fehlschlug

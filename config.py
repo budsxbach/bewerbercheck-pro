@@ -6,14 +6,27 @@ load_dotenv()
 
 
 class Config:
-    # SECRET_KEY: in Produktion MUSS diese Env-Variable gesetzt sein
-    _secret_key = os.environ.get("SECRET_KEY")
+    # Produktionserkennung
     _is_prod = os.environ.get("APP_URL", "http://localhost:5000").startswith("https://")
-    if not _secret_key and _is_prod:
-        raise RuntimeError(
-            "SECRET_KEY Umgebungsvariable ist nicht gesetzt! "
-            "Die Anwendung kann in Produktion nicht ohne sicheren SECRET_KEY starten."
-        )
+
+    # ── Pflicht-Variablen in Produktion prüfen ─────────────────────────────
+    _secret_key = os.environ.get("SECRET_KEY")
+    if _is_prod:
+        _required = {
+            "SECRET_KEY": _secret_key,
+            "MAILGUN_API_KEY": os.environ.get("MAILGUN_API_KEY"),
+            "ANTHROPIC_API_KEY": os.environ.get("ANTHROPIC_API_KEY"),
+            "STRIPE_SECRET_KEY": os.environ.get("STRIPE_SECRET_KEY"),
+            "STRIPE_WEBHOOK_SECRET": os.environ.get("STRIPE_WEBHOOK_SECRET"),
+            "STRIPE_PRICE_ID": os.environ.get("STRIPE_PRICE_ID"),
+            "MAILGUN_WEBHOOK_SIGNING_KEY": os.environ.get("MAILGUN_WEBHOOK_SIGNING_KEY"),
+        }
+        _missing = [k for k, v in _required.items() if not v]
+        if _missing:
+            raise RuntimeError(
+                f"Fehlende Umgebungsvariablen in Produktion: {', '.join(_missing)}. "
+                "Die App kann ohne diese Werte nicht starten."
+            )
     SECRET_KEY = _secret_key or "dev-only-insecure-key-do-not-use-in-production"
 
     _db_url = os.environ.get("DATABASE_URL", "postgresql://localhost/bewerbercheck")
@@ -35,7 +48,12 @@ class Config:
         _db_url = _db_url.replace("postgres://", "postgresql://", 1)
     SQLALCHEMY_DATABASE_URI = _db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}  # stale Verbindungen automatisch prüfen
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_size": int(os.environ.get("DB_POOL_SIZE", 5)),
+        "max_overflow": int(os.environ.get("DB_MAX_OVERFLOW", 10)),
+        "pool_recycle": 300,  # Verbindungen nach 5 Minuten erneuern
+    }
 
     # Mailgun
     MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY")
@@ -75,3 +93,11 @@ class Config:
 
     # KI-Verarbeitungslimit für Testphase-User (0 = deaktiviert)
     KI_LIMIT_TESTPHASE = int(os.environ.get("KI_LIMIT_TESTPHASE", 0))
+
+    # ── Impressum / Rechtliches (konfigurierbar) ──────────────────────────
+    FIRMA_NAME = os.environ.get("FIRMA_NAME", "Online Infinity Solutions")
+    FIRMA_INHABER = os.environ.get("FIRMA_INHABER", "Stefan Baich")
+    FIRMA_STRASSE = os.environ.get("FIRMA_STRASSE", "Pestalozzistrasse 25")
+    FIRMA_PLZ_ORT = os.environ.get("FIRMA_PLZ_ORT", "22305 Hamburg")
+    FIRMA_TELEFON = os.environ.get("FIRMA_TELEFON", "+49 1523 8415504")
+    FIRMA_EMAIL = os.environ.get("FIRMA_EMAIL", "info@systemautomatik.com")

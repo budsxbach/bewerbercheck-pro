@@ -9,8 +9,8 @@
     <h2>1. Geltungsbereich</h2>
     <p>
         Diese Rückerstattungsrichtlinie gilt für alle kostenpflichtigen Abonnements von
-        Bewerbercheck-Pro, angeboten durch Online Infinity Solutions,
-        Pestalozzistrasse 25, 22305 Hamburg.
+        Bewerbercheck-Pro, angeboten durch {{ config.FIRMA_NAME }},
+        {{ config.FIRMA_STRASSE }}, {{ config.FIRMA_PLZ_ORT }}.
     </p>
 
     <h2>2. 7-Tage-Widerrufsrecht</h2>
@@ -35,7 +35,7 @@
     </ol>
     <p>
         Alternativ können Sie uns per E-Mail kontaktieren:
-        <a href="mailto:info@systemautomatik.com">info@systemautomatik.com</a>
+        <a href="mailto:{{ config.FIRMA_EMAIL }}">{{ config.FIRMA_EMAIL }}</a>
     </p>
 
     <h2>4. Bearbeitungszeit</h2>
@@ -59,9 +59,9 @@
     <h2>6. Kontakt</h2>
     <p>
         Bei Fragen zu Ihrer Rückerstattung wenden Sie sich an:<br>
-        Online Infinity Solutions<br>
-        Pestalozzistrasse 25, 22305 Hamburg<br>
-        E-Mail: <a href="mailto:info@systemautomatik.com">info@systemautomatik.com</a>
+        {{ config.FIRMA_NAME }}<br>
+        {{ config.FIRMA_STRASSE }}, {{ config.FIRMA_PLZ_ORT }}<br>
+        E-Mail: <a href="mailto:{{ config.FIRMA_EMAIL }}">{{ config.FIRMA_EMAIL }}</a>
     </p>
 </div>
 {% endblock %}

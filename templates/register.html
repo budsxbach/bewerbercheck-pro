@@ -18,20 +18,50 @@
             </div>
             <div class="form-group">
                 <label for="passwort">Passwort</label>
-                <input type="password" id="passwort" name="passwort" required
-                       placeholder="Mindestens 8 Zeichen"
-                       class="form-control" autocomplete="new-password">
+                <div class="password-wrapper">
+                    <input type="password" id="passwort" name="passwort" required
+                           placeholder="Mindestens 8 Zeichen"
+                           class="form-control" autocomplete="new-password">
+                    <button type="button" class="password-toggle" onclick="togglePw('passwort', this)">Zeigen</button>
+                </div>
+                <div class="password-strength" id="pwStrength">
+                    <div class="strength-bar"><div class="strength-fill"></div></div>
+                    <div class="strength-label"></div>
+                </div>
             </div>
             <div class="form-group">
                 <label for="passwort2">Passwort bestätigen</label>
-                <input type="password" id="passwort2" name="passwort2" required
-                       placeholder="Passwort wiederholen"
-                       class="form-control" autocomplete="new-password">
+                <div class="password-wrapper">
+                    <input type="password" id="passwort2" name="passwort2" required
+                           placeholder="Passwort wiederholen"
+                           class="form-control" autocomplete="new-password">
+                    <button type="button" class="password-toggle" onclick="togglePw('passwort2', this)">Zeigen</button>
+                </div>
             </div>
             <button type="submit" class="btn btn-primary btn-full">
                 Kostenlos registrieren
             </button>
         </form>
+
+        <script nonce="{{ csp_nonce }}">
+        function togglePw(id, btn) {
+            var input = document.getElementById(id);
+            if (input.type === 'password') { input.type = 'text'; btn.textContent = 'Verbergen'; }
+            else { input.type = 'password'; btn.textContent = 'Zeigen'; }
+        }
+        document.getElementById('passwort').addEventListener('input', function() {
+            var pw = this.value, score = 0;
+            if (pw.length >= 8) score++;
+            if (/[A-Z]/.test(pw)) score++;
+            if (/[0-9]/.test(pw)) score++;
+            if (/[^A-Za-z0-9]/.test(pw)) score++;
+            var el = document.getElementById('pwStrength');
+            var labels = ['', 'Schwach', 'Mittel', 'Gut', 'Stark'];
+            var classes = ['', 'strength-weak', 'strength-medium', 'strength-good', 'strength-strong'];
+            el.className = 'password-strength ' + (classes[score] || '');
+            el.querySelector('.strength-label').textContent = pw.length > 0 ? (labels[score] || 'Zu kurz') : '';
+        });
+        </script>
 
         <p class="auth-footer">
             Bereits ein Konto?

@@ -18,7 +18,7 @@
         <div class="nav-brand">
             <a href="{{ url_for('dashboard.index') }}" class="nav-brand-link"><img src="{{ url_for('static', filename='icon.svg') }}" width="28" height="28" alt="" class="nav-logo"> Bewerbercheck-Pro</a>
         </div>
-        <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('nav-open')" aria-label="Menü">
+        <button class="nav-toggle" onclick="this.classList.toggle('active');document.querySelector('.nav-links').classList.toggle('nav-open')" aria-label="Menü">
             <span></span><span></span><span></span>
         </button>
         <div class="nav-links">
@@ -65,7 +65,7 @@
     </main>
 
     <footer class="footer">
-        <p>&copy; 2025 Bewerbercheck-Pro &middot; <a href="{{ url_for('datenschutz') }}">Datenschutz</a> &middot; <a href="{{ url_for('impressum') }}">Impressum</a> &middot; <a href="{{ url_for('rueckgaberecht') }}">Rückgaberecht</a></p>
+        <p>&copy; 2026 Bewerbercheck-Pro &middot; <a href="{{ url_for('datenschutz') }}">Datenschutz</a> &middot; <a href="{{ url_for('impressum') }}">Impressum</a> &middot; <a href="{{ url_for('rueckgaberecht') }}">Rückgaberecht</a></p>
     </footer>
 
     <!-- Cookie-Banner (nur Session-Cookies) -->
@@ -99,14 +99,26 @@
         });
     });
 
-    // Cookie-Banner
+    // Cookie-Banner mit Animation
     if (!localStorage.getItem('cookies_accepted')) {
         document.getElementById('cookieBanner').style.display = 'flex';
     }
     function acceptCookies() {
         localStorage.setItem('cookies_accepted', 'true');
-        document.getElementById('cookieBanner').style.display = 'none';
+        var banner = document.getElementById('cookieBanner');
+        banner.classList.add('cookie-hiding');
+        setTimeout(function() { banner.style.display = 'none'; }, 300);
     }
+
+    // Loading-Overlay bei Klick auf Tabellenzeilen
+    document.querySelectorAll('.clickable-row').forEach(function(row) {
+        row.addEventListener('click', function() {
+            var overlay = document.createElement('div');
+            overlay.className = 'page-loading';
+            overlay.innerHTML = '<div class="spinner-lg"></div>';
+            document.body.appendChild(overlay);
+        });
+    });
     </script>
 </body>
 </html>

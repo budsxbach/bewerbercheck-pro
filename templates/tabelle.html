@@ -12,6 +12,11 @@
 </div>
 
 {% if applications %}
+<!-- Suchfeld -->
+<div class="table-toolbar">
+    <input type="text" class="search-input" id="tabelleSearch" placeholder="Suche nach Name, E-Mail, Skills…">
+</div>
+
 <div class="table-wrapper" style="overflow-x:auto;">
     <table class="applications-table" style="min-width:900px;">
         <thead>
@@ -80,6 +85,15 @@
     {{ applications|length }} Bewerbung{{ 'en' if applications|length != 1 else '' }} &middot;
     Klicken Sie auf eine Zeile für Details
 </p>
+
+<script nonce="{{ csp_nonce }}">
+document.getElementById('tabelleSearch').addEventListener('input', function() {
+    var query = this.value.toLowerCase();
+    document.querySelectorAll('.applications-table tbody tr').forEach(function(row) {
+        row.style.display = row.textContent.toLowerCase().indexOf(query) > -1 ? '' : 'none';
+    });
+});
+</script>
 
 {% else %}
 <div class="onboarding-card" style="text-align:center; padding:3rem 2rem;">

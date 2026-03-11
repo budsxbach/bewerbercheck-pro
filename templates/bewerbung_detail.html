@@ -10,22 +10,40 @@
     </span>
 </div>
 
-{% if application.score_begruendung %}
-<div class="card score-card">
-    <h3>KI-Bewertung</h3>
-    <p>{{ application.score_begruendung }}</p>
+<!-- SVG Score-Ring -->
+<div class="score-ring-container">
+    <div class="score-ring-wrapper">
+        <svg class="score-ring-svg" viewBox="0 0 120 120">
+            <circle class="score-ring-bg" cx="60" cy="60" r="52"/>
+            {% set score_val = application.score or 0 %}
+            {% set dash_offset = 327 - (327 * score_val / 10) %}
+            <circle class="score-ring-fill" cx="60" cy="60" r="52"
+                    stroke-dasharray="327"
+                    stroke-dashoffset="{{ dash_offset }}"
+                    stroke="{{ '#00f0b5' if score_val >= 7 else ('#f59e0b' if score_val >= 4 else '#ef4444') }}"/>
+        </svg>
+        <div class="score-ring-text">
+            <span class="score-ring-value" style="color: {{ '#00f0b5' if score_val >= 7 else ('#f59e0b' if score_val >= 4 else '#ef4444') }}">{{ score_val }}</span>
+            <span class="score-ring-label">von 10</span>
+        </div>
+    </div>
+    {% if application.score_begruendung %}
+    <div class="score-ring-info">
+        <h3>KI-Bewertung</h3>
+        <p>{{ application.score_begruendung }}</p>
+    </div>
+    {% endif %}
 </div>
-{% endif %}
 
 <!-- Quick Actions -->
 <div class="quick-actions">
     {% if application.bewerber_email %}
-    <a href="mailto:{{ application.bewerber_email }}" class="btn btn-primary btn-sm">
+    <a href="mailto:{{ application.bewerber_email }}" class="btn btn-primary">
         ✉ E-Mail schreiben
     </a>
     {% endif %}
     {% if application.telefon %}
-    <a href="tel:{{ application.telefon }}" class="btn btn-outline btn-sm">
+    <a href="tel:{{ application.telefon }}" class="btn btn-outline">
         📞 Anrufen
     </a>
     {% endif %}
@@ -96,14 +114,20 @@
 
 <!-- Keyboard Navigation Hint -->
 <div class="keyboard-hint">
-    <kbd>Esc</kbd> oder <a href="{{ url_for('dashboard.index') }}">← Zurück zum Dashboard</a>
+    <kbd>Esc</kbd> Zurück &middot; <kbd>E</kbd> E-Mail schreiben &middot; <a href="{{ url_for('dashboard.index') }}">← Dashboard</a>
 </div>
 
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.key === 'Escape') {
         window.location = '{{ url_for("dashboard.index") }}';
     }
+    {% if application.bewerber_email %}
+    if (e.key === 'e' || e.key === 'E') {
+        window.location = 'mailto:{{ application.bewerber_email }}';
+    }
+    {% endif %}
 });
 </script>
 {% endblock %}

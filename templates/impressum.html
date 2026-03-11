@@ -8,22 +8,22 @@
 
     <h2>Angaben gemäß § 5 TMG</h2>
     <p>
-        <strong>Online Infinity Solutions</strong><br>
-        Stefan Baich<br>
-        Pestalozzistrasse 25<br>
-        22305 Hamburg
+        <strong>{{ config.FIRMA_NAME }}</strong><br>
+        {{ config.FIRMA_INHABER }}<br>
+        {{ config.FIRMA_STRASSE }}<br>
+        {{ config.FIRMA_PLZ_ORT }}
     </p>
 
     <h2>Kontakt</h2>
     <p>
-        Telefon: +49 1523 8415504<br>
-        E-Mail: info@systemautomatik.com
+        Telefon: {{ config.FIRMA_TELEFON }}<br>
+        E-Mail: {{ config.FIRMA_EMAIL }}
     </p>
 
     <h2>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
     <p>
-        Stefan Baich<br>
-        Pestalozzistrasse 25, 22305 Hamburg
+        {{ config.FIRMA_INHABER }}<br>
+        {{ config.FIRMA_STRASSE }}, {{ config.FIRMA_PLZ_ORT }}
     </p>
 
     <h2>Streitschlichtung</h2>

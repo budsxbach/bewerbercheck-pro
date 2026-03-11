@@ -61,7 +61,8 @@ def test_user_id(app):
     Räumt nach dem Test alle zugehörigen Daten auf.
     """
     from app.models import db, User, CustomerSettings, Application
-    from datetime import datetime, timedelta
+    from datetime import timedelta
+    from app.models import _utcnow
 
     with app.app_context():
         # Vorherigen Test-User bereinigen (falls vorhanden)
@@ -75,7 +76,7 @@ def test_user_id(app):
         user = User(
             email="webhook-test@example.com",
             testphase_aktiv=True,
-            testphase_enddatum=datetime.utcnow() + timedelta(days=7),
+            testphase_enddatum=_utcnow() + timedelta(days=7),
             abo_aktiv=False,
         )
         user.set_password("test123")

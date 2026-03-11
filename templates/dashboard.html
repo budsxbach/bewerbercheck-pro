@@ -62,16 +62,27 @@
 {% endif %}
 
 {% if applications %}
+<!-- Suchfeld + Score-Filter -->
+<div class="table-toolbar">
+    <input type="text" class="search-input" id="tableSearch" placeholder="Suche nach Name, E-Mail, Skills…">
+    <div class="filter-buttons">
+        <button class="filter-btn active" data-filter="all">Alle</button>
+        <button class="filter-btn" data-filter="high">Top 7+</button>
+        <button class="filter-btn" data-filter="mid">Mittel 4-6</button>
+        <button class="filter-btn" data-filter="low">Niedrig &lt;4</button>
+    </div>
+</div>
+
 <div class="table-wrapper">
-    <table class="applications-table">
+    <table class="applications-table" id="dashboardTable">
         <thead>
             <tr>
-                <th>Score</th>
-                <th>Name</th>
+                <th class="sortable-th" data-sort="number">Score</th>
+                <th class="sortable-th" data-sort="text">Name</th>
                 <th>E-Mail</th>
                 <th class="hide-mobile">Skills</th>
-                <th class="hide-mobile">Erfahrung</th>
-                <th>Eingegangen</th>
+                <th class="sortable-th hide-mobile" data-sort="number">Erfahrung</th>
+                <th class="sortable-th" data-sort="date">Eingegangen</th>
             </tr>
         </thead>
         <tbody>
@@ -113,14 +124,88 @@
 {% if pagination.pages > 1 %}
 <div class="pagination">
     {% if pagination.has_prev %}
-    <a href="{{ url_for('dashboard.index', page=pagination.prev_num) }}" class="btn btn-outline btn-sm">&larr; Zurück</a>
+    <a href="{{ url_for('dashboard.index', page=pagination.prev_num) }}" class="page-btn">&larr;</a>
     {% endif %}
-    <span class="pagination-info">Seite {{ pagination.page }} von {{ pagination.pages }}</span>
+    <div class="pagination-pages">
+        {% set p_start = [1, pagination.page - 3]|max %}
+        {% set p_end = [pagination.pages, pagination.page + 3]|min %}
+        {% if p_start > 1 %}
+        <a href="{{ url_for('dashboard.index', page=1) }}" class="page-btn">1</a>
+        {% if p_start > 2 %}<span class="page-ellipsis">…</span>{% endif %}
+        {% endif %}
+        {% for p in range(p_start, p_end + 1) %}
+        <a href="{{ url_for('dashboard.index', page=p) }}" class="page-btn {{ 'active' if p == pagination.page else '' }}">{{ p }}</a>
+        {% endfor %}
+        {% if p_end < pagination.pages %}
+        {% if p_end < pagination.pages - 1 %}<span class="page-ellipsis">…</span>{% endif %}
+        <a href="{{ url_for('dashboard.index', page=pagination.pages) }}" class="page-btn">{{ pagination.pages }}</a>
+        {% endif %}
+    </div>
     {% if pagination.has_next %}
-    <a href="{{ url_for('dashboard.index', page=pagination.next_num) }}" class="btn btn-outline btn-sm">Weiter &rarr;</a>
+    <a href="{{ url_for('dashboard.index', page=pagination.next_num) }}" class="page-btn">&rarr;</a>
     {% endif %}
 </div>
 {% endif %}
+
+<!-- Dashboard Suche, Filter, Sortierung -->
+<script nonce="{{ csp_nonce }}">
+// Live-Suche
+document.getElementById('tableSearch').addEventListener('input', function() {
+    var query = this.value.toLowerCase();
+    document.querySelectorAll('#dashboardTable tbody tr').forEach(function(row) {
+        row.style.display = row.textContent.toLowerCase().indexOf(query) > -1 ? '' : 'none';
+    });
+});
+
+// Score-Filter
+document.querySelectorAll('.filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        var filter = this.dataset.filter;
+        document.querySelectorAll('#dashboardTable tbody tr').forEach(function(row) {
+            if (filter === 'all') { row.style.display = ''; return; }
+            var badge = row.querySelector('.score-badge');
+            if (!badge) { row.style.display = 'none'; return; }
+            var match = badge.classList.contains('score-' + filter);
+            row.style.display = match ? '' : 'none';
+        });
+    });
+});
+
+// Sortierbare Spalten
+document.querySelectorAll('.sortable-th').forEach(function(th) {
+    th.addEventListener('click', function() {
+        var table = document.getElementById('dashboardTable');
+        var tbody = table.querySelector('tbody');
+        var rows = Array.from(tbody.querySelectorAll('tr'));
+        var idx = Array.from(th.parentNode.children).indexOf(th);
+        var type = th.dataset.sort;
+        var asc = !th.classList.contains('sort-asc');
+
+        document.querySelectorAll('.sortable-th').forEach(function(h) { h.classList.remove('sort-asc', 'sort-desc'); });
+        th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+
+        rows.sort(function(a, b) {
+            var aVal = a.children[idx].textContent.trim();
+            var bVal = b.children[idx].textContent.trim();
+            if (type === 'number') {
+                aVal = parseFloat(aVal) || 0;
+                bVal = parseFloat(bVal) || 0;
+                return asc ? aVal - bVal : bVal - aVal;
+            } else if (type === 'date') {
+                var aParts = aVal.split('.');
+                var bParts = bVal.split('.');
+                aVal = aParts.length === 3 ? new Date(aParts[2], aParts[1]-1, aParts[0]) : new Date(0);
+                bVal = bParts.length === 3 ? new Date(bParts[2], bParts[1]-1, bParts[0]) : new Date(0);
+                return asc ? aVal - bVal : bVal - aVal;
+            }
+            return asc ? aVal.localeCompare(bVal, 'de') : bVal.localeCompare(aVal, 'de');
+        });
+        rows.forEach(function(row) { tbody.appendChild(row); });
+    });
+});
+</script>
 
 {% else %}
 <!-- Onboarding Empty State -->

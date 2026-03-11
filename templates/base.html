@@ -41,6 +41,14 @@
             <a href="{{ url_for('auth.logout') }}" class="nav-link-subtle">Abmelden</a>
         </div>
     </nav>
+    {% elif request.endpoint == 'landing' %}
+    <!-- Minimale Navbar für Landing-Page: Logo + Login-Button -->
+    <nav class="navbar" style="justify-content:space-between;">
+        <a href="{{ url_for('landing') }}" class="nav-brand-link" style="display:flex;align-items:center;gap:.5rem;font-weight:700;color:var(--gray-900);text-decoration:none;">
+            <img src="{{ url_for('static', filename='icon.svg') }}" width="28" height="28" alt=""> Bewerbercheck-Pro
+        </a>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-sm">Einloggen</a>
+    </nav>
     {% endif %}
 
     <!-- Toast-Benachrichtigungen -->

@@ -87,7 +87,7 @@
         </thead>
         <tbody>
             {% for app in applications %}
-            <tr class="application-row clickable-row" onclick="window.location='{{ url_for('dashboard.detail', application_id=app.id) }}'">
+            <tr class="application-row clickable-row" data-href="{{ url_for('dashboard.detail', application_id=app.id) }}">
                 <td>
                     <span class="score-badge score-{{ 'high' if app.score >= 7 else ('mid' if app.score >= 4 else 'low') }}">
                         {{ app.score or '–' }}/10
@@ -173,6 +173,11 @@ document.querySelectorAll('.filter-btn').forEach(function(btn) {
     });
 });
 
+// CSP-konforme Zeilennavigation via data-href
+document.querySelectorAll('.clickable-row[data-href]').forEach(function(row) {
+    row.addEventListener('click', function() { window.location = this.dataset.href; });
+});
+
 // Sortierbare Spalten
 document.querySelectorAll('.sortable-th').forEach(function(th) {
     th.addEventListener('click', function() {
@@ -213,7 +218,7 @@ document.querySelectorAll('.sortable-th').forEach(function(th) {
     <div class="onboarding-header">
         <div class="empty-icon">📬</div>
         <h2>Bereit für Ihre erste Bewerbung</h2>
-        <p>Folgen Sie diesen 3 Schritten, um Bewerbungen automatisch zu empfangen.</p>
+        <p>Folgen Sie diesen 2 Schritten, um Bewerbungen automatisch zu empfangen.</p>
     </div>
 
     <div class="onboarding-steps">
@@ -228,22 +233,8 @@ document.querySelectorAll('.sortable-th').forEach(function(th) {
             </div>
         </div>
 
-        <div class="onboarding-step {{ 'step-done' if has_sheets else 'step-pending' }}">
-            <div class="step-check">{{ '✓' if has_sheets else '2' }}</div>
-            <div class="step-content">
-                <strong>Google Sheet verknüpfen</strong>
-                <p>{{ 'Verknüpft ✓' if has_sheets else 'Optional – für automatischen Export.' }}</p>
-                {% if not has_sheets %}
-                <a href="{{ url_for('settings_bp.index') }}" class="btn btn-sm btn-outline" style="margin-top:.5rem">Einrichten</a>
-                <p style="font-size:.8rem; color:var(--gray-400); margin:.5rem 0 0;">
-                    Oder: Nutzen Sie die eingebaute <a href="{{ url_for('dashboard.tabelle') }}">Tabelle</a> – ohne Google-Konto.
-                </p>
-                {% endif %}
-            </div>
-        </div>
-
         <div class="onboarding-step {{ 'step-done' if has_criteria else 'step-pending' }}">
-            <div class="step-check">{{ '✓' if has_criteria else '3' }}</div>
+            <div class="step-check">{{ '✓' if has_criteria else '2' }}</div>
             <div class="step-content">
                 <strong>Stellenbeschreibung hinterlegen</strong>
                 <p>{{ 'Konfiguriert ✓' if has_criteria else 'Hilft der KI, besser zu bewerten.' }}</p>
@@ -252,6 +243,12 @@ document.querySelectorAll('.sortable-th').forEach(function(th) {
                 {% endif %}
             </div>
         </div>
+    </div>
+
+    <!-- Google Sheets: kompakter Hinweis, kein Pflichtschritt -->
+    <div style="margin-top:.75rem; padding:.75rem 1rem; background:var(--bg-elevated); border-radius:var(--radius-sm); font-size:.82rem; color:var(--gray-500);">
+        <strong style="color:var(--gray-700);">Google Sheets inklusive:</strong>
+        Automatischer Export optional – <a href="{{ url_for('settings_bp.index') }}">in Einstellungen einrichten</a>.
     </div>
 
     {% if current_user.settings %}

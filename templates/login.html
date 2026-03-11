@@ -21,7 +21,7 @@
                 <div class="password-wrapper">
                     <input type="password" id="passwort" name="passwort" required
                            class="form-control" autocomplete="current-password">
-                    <button type="button" class="password-toggle" onclick="togglePw('passwort', this)">Zeigen</button>
+                    <button type="button" class="password-toggle">Zeigen</button>
                 </div>
             </div>
             <button type="submit" class="btn btn-primary btn-full">
@@ -30,11 +30,14 @@
         </form>
 
         <script nonce="{{ csp_nonce }}">
-        function togglePw(id, btn) {
-            var input = document.getElementById(id);
-            if (input.type === 'password') { input.type = 'text'; btn.textContent = 'Verbergen'; }
-            else { input.type = 'password'; btn.textContent = 'Zeigen'; }
-        }
+        // CSP-konformer Passwort-Toggle via addEventListener (kein onclick)
+        document.querySelectorAll('.password-toggle').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var input = this.closest('.password-wrapper').querySelector('input');
+                if (input.type === 'password') { input.type = 'text'; this.textContent = 'Verbergen'; }
+                else { input.type = 'password'; this.textContent = 'Zeigen'; }
+            });
+        });
         </script>
 
         <p class="auth-footer">

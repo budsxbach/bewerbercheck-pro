@@ -52,6 +52,10 @@ def register():
             flash("Passwort muss mindestens 8 Zeichen lang sein.", "danger")
             return render_template("register.html")
 
+        if len(passwort) > 128:
+            flash("Passwort darf maximal 128 Zeichen lang sein.", "danger")
+            return render_template("register.html")
+
         if User.query.filter_by(email=email).first():
             flash("Diese E-Mail-Adresse ist bereits registriert.", "danger")
             return render_template("register.html")
@@ -303,6 +307,8 @@ def passwort_reset(token):
         passwort = request.form.get("passwort", "")
         if len(passwort) < 8:
             flash("Passwort muss mindestens 8 Zeichen lang sein.", "danger")
+        elif len(passwort) > 128:
+            flash("Passwort darf maximal 128 Zeichen lang sein.", "danger")
         else:
             user.set_password(passwort)
             user.reset_token = None         # Token invalidieren nach Verwendung
@@ -487,12 +493,20 @@ def stripe_rueckerstattung():
 
     try:
         invoices = stripe.Invoice.list(customer=user.stripe_customer_id, limit=1)
-        charge_id = invoices.data[0].charge
+        hat_charge = invoices.data and invoices.data[0].charge
 
-        stripe.Refund.create(charge=charge_id)
+        if hat_charge:
+            stripe.Refund.create(charge=invoices.data[0].charge)
+            flash("Ihre Rückerstattung wurde eingeleitet. Das Geld erscheint in 5–10 Werktagen.", "success")
+        else:
+            # Trial-User: noch keine Zahlung → nur Abo kündigen, kein Refund nötig
+            current_app.logger.info(
+                f"Rückerstattung für User {user.id}: kein Charge gefunden – nur Abo-Kündigung."
+            )
+            flash("Ihr Abonnement wurde gekündigt. Es wurde kein Betrag belastet.", "success")
+
         stripe.Subscription.cancel(user.stripe_subscription_id)
 
-        flash("Ihre Rückerstattung wurde eingeleitet. Das Geld erscheint in 5–10 Werktagen.", "success")
     except Exception as e:
         current_app.logger.error(f"Rückerstattungsfehler: {e}")
         flash("Fehler bei der Rückerstattung. Bitte kontaktieren Sie den Support.", "danger")

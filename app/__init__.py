@@ -1,6 +1,7 @@
 import logging
 import re
-from flask import Flask, redirect, url_for, jsonify, render_template, request, make_response
+import secrets
+from flask import Flask, redirect, url_for, jsonify, render_template, request, make_response, g
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
@@ -38,6 +39,7 @@ def _add_column_if_missing(db, table, column, col_type):
         db.session.commit()
     except Exception:
         db.session.rollback()  # Spalte existiert bereits
+        logger.debug(f"Spalte {column!r} in {table!r} existiert bereits – übersprungen.")
 
 
 def create_app():
@@ -96,13 +98,22 @@ def create_app():
 
     # Webhook-Endpunkte: globales Rate Limit (HMAC schützt bereits, aber Defense-in-Depth)
     _webhook_limits = {
-        "email.email_webhook": "120 per minute",
+        "email.email_webhook": "5 per minute",
         "auth.stripe_webhook": "200 per minute",
     }
     for endpoint_name, limit_string in _webhook_limits.items():
         view_func = app.view_functions.get(endpoint_name)
         if view_func:
             app.view_functions[endpoint_name] = limiter.limit(limit_string)(view_func)
+
+    # ─── CSP-Nonce: pro Request einmalig generieren ───────────────
+    @app.before_request
+    def generate_csp_nonce():
+        g.csp_nonce = secrets.token_urlsafe(16)
+
+    @app.context_processor
+    def inject_csp_nonce():
+        return {"csp_nonce": getattr(g, "csp_nonce", "")}
 
     # ─── HTTPS erzwingen (nur in Produktion) ─────────────────────
     @app.before_request
@@ -125,11 +136,11 @@ def create_app():
                 "max-age=31536000; includeSubDomains"
             )
 
-        # Content Security Policy: kontrolliert, was der Browser laden darf
-        # unsafe-inline nötig für die Inline-<script>-Blöcke in den Templates
+        # Content Security Policy: Nonce statt unsafe-inline
+        nonce = getattr(g, "csp_nonce", "")
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://plausible.io; "
+            f"script-src 'self' 'nonce-{nonce}' https://plausible.io; "
             "style-src 'self' 'unsafe-inline'; "
             "img-src 'self' data:; "
             "font-src 'self'; "

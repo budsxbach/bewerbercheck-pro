@@ -75,10 +75,10 @@
     </div>
 
     {% if config.PLAUSIBLE_DOMAIN %}
-    <script defer data-domain="{{ config.PLAUSIBLE_DOMAIN }}" src="https://plausible.io/js/script.js"></script>
+    <script nonce="{{ csp_nonce }}" defer data-domain="{{ config.PLAUSIBLE_DOMAIN }}" src="https://plausible.io/js/script.js"></script>
     {% endif %}
 
-    <script>
+    <script nonce="{{ csp_nonce }}">
     // Auto-dismiss toasts nach 5 Sekunden
     document.querySelectorAll('.toast').forEach(function(toast, i) {
         setTimeout(function() {

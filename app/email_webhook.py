@@ -3,7 +3,7 @@ import hmac
 import io
 import logging
 import time
-from flask import Blueprint, request, current_app
+from flask import Blueprint, request, current_app, jsonify
 from flask_mail import Message
 
 from .models import db, CustomerSettings, Application
@@ -22,6 +22,9 @@ def email_webhook():
     if not _verify_mailgun_signature(request):
         logger.warning("Mailgun Webhook: Ungültige Signatur – Anfrage abgelehnt.")
         return "Unauthorized", 401
+
+    # Dry-Run-Modus: KI-Ausgabe prüfen ohne DB-Eintrag (nur bei gültiger Signatur)
+    is_dry_run = request.args.get("dry_run") == "1"
 
     # Deduplizierung: Mailgun Message-ID prüfen
     message_id = request.form.get("Message-Id", "").strip()
@@ -48,8 +51,32 @@ def email_webhook():
         logger.info(f"User {user.id} hat kein aktives Abo – E-Mail ignoriert.")
         return "OK", 200
 
+    # Testphase-Limit prüfen (falls konfiguriert)
+    limit = current_app.config.get("KI_LIMIT_TESTPHASE", 0)
+    if limit and user.testphase_aktiv:
+        anzahl = Application.query.filter_by(user_id=user.id).count()
+        if anzahl >= limit:
+            logger.info(
+                f"User {user.id} hat Testphase-Limit ({limit}) erreicht – E-Mail ignoriert."
+            )
+            return "OK", 200
+
     # PDF-Anhänge extrahieren
     anhang_texte = _extrahiere_anhaenge(request)
+
+    # Dry-Run: KI ausführen und Ergebnis zurückgeben – kein DB-Eintrag
+    if is_dry_run:
+        try:
+            ergebnis = verarbeite_bewerbung(
+                email_text=body_plain or _html_zu_text(body_html),
+                anhang_texte=anhang_texte,
+                stellenbeschreibung=customer_settings.stellenbeschreibung or "",
+                bewertungskriterien=customer_settings.bewertungskriterien or "",
+            )
+            return jsonify({"dry_run": True, "ergebnis": ergebnis}), 200
+        except Exception as e:
+            logger.error(f"dry_run KI-Fehler: {e}")
+            return jsonify({"dry_run": True, "error": str(e)}), 200
 
     # Bewerbung in Datenbank speichern (zuerst als unverarbeitet)
     application = Application(
@@ -72,7 +99,13 @@ def email_webhook():
 
         # Ergebnis in Datenbank speichern
         application.bewerber_name = ergebnis.get("name")
-        application.bewerber_email = ergebnis.get("email", absender)
+        email_aus_ki = ergebnis.get("email")
+        if email_aus_ki and "@" not in str(email_aus_ki):
+            logger.warning(
+                f"KI-E-Mail {email_aus_ki!r} enthält kein '@' – Absender {absender!r} wird verwendet."
+            )
+            email_aus_ki = None
+        application.bewerber_email = email_aus_ki or absender
         application.telefon = ergebnis.get("telefon")
         application.skills = ergebnis.get("skills")
         application.berufserfahrung_jahre = ergebnis.get("berufserfahrung_jahre")

@@ -125,8 +125,13 @@ def retry(application_id):
             bewertungskriterien=settings.bewertungskriterien or "",
         )
 
+        email_aus_ki = ergebnis.get("email")
+        if email_aus_ki and "@" not in str(email_aus_ki):
+            logger.warning(f"Retry: KI-E-Mail {email_aus_ki!r} enthält kein '@' – wird verworfen.")
+            email_aus_ki = None
+
         application.bewerber_name = ergebnis.get("name")
-        application.bewerber_email = ergebnis.get("email")
+        application.bewerber_email = email_aus_ki
         application.telefon = ergebnis.get("telefon")
         application.skills = ergebnis.get("skills")
         application.berufserfahrung_jahre = ergebnis.get("berufserfahrung_jahre")
@@ -152,6 +157,6 @@ def retry(application_id):
     except Exception as e:
         application.fehler = str(e)
         db.session.commit()
-        flash(f"Erneute Verarbeitung fehlgeschlagen: {e}", "danger")
+        flash("Erneute Verarbeitung fehlgeschlagen. Bitte prüfen Sie die Server-Logs.", "danger")
 
     return redirect(url_for("dashboard.index"))

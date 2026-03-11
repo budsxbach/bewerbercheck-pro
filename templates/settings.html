@@ -157,7 +157,7 @@
     </form>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 function copyToClipboard(elementId, btn) {
     var text = document.getElementById(elementId).textContent;
     navigator.clipboard.writeText(text).then(function() {

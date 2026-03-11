@@ -35,6 +35,7 @@ class Config:
         _db_url = _db_url.replace("postgres://", "postgresql://", 1)
     SQLALCHEMY_DATABASE_URI = _db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}  # stale Verbindungen automatisch prüfen
 
     # Mailgun
     MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY")
@@ -71,3 +72,6 @@ class Config:
 
     # Analytics (DSGVO-konform, kein Cookie-Consent nötig)
     PLAUSIBLE_DOMAIN = os.environ.get("PLAUSIBLE_DOMAIN")
+
+    # KI-Verarbeitungslimit für Testphase-User (0 = deaktiviert)
+    KI_LIMIT_TESTPHASE = int(os.environ.get("KI_LIMIT_TESTPHASE", 0))

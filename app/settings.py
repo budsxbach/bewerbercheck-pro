@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_required, current_user
 
@@ -21,7 +22,8 @@ def index():
         bewertungskriterien = request.form.get("bewertungskriterien", "").strip()
 
         # Grundlegende URL-Validierung
-        if sheets_url and "docs.google.com/spreadsheets" not in sheets_url:
+        parsed = urlparse(sheets_url) if sheets_url else None
+        if sheets_url and (parsed.netloc != "docs.google.com" or "/spreadsheets" not in parsed.path):
             flash("Bitte geben Sie eine gültige Google Sheets URL ein.", "danger")
             return render_template("settings.html", settings=settings, service_account_email=_get_service_account_email())
 
@@ -70,10 +72,11 @@ def route_reparieren():
     from .auth import repariere_mailgun_route
     success = repariere_mailgun_route(current_user.id, settings.eigene_email)
 
-    if success:
+    if success.get("ok"):
         flash("Mailgun-Route wurde erfolgreich neu erstellt. E-Mail-Empfang sollte jetzt funktionieren.", "success")
     else:
-        flash("Route konnte nicht repariert werden – bitte MAILGUN_API_KEY prüfen.", "danger")
+        fehler = success.get("error", "Unbekannter Fehler")
+        flash(f"Route konnte nicht repariert werden: {fehler}", "danger")
 
     return redirect(url_for("settings_bp.index"))
 
@@ -82,12 +85,12 @@ def route_reparieren():
 @login_required
 def admin_mailgun_diagnose():
     """Admin-Diagnose: Zeigt alle Mailgun-Routen und ob sie zur aktuellen APP_URL passen.
-    Erfordert ?key=ADMIN_KEY (gesetzt über ADMIN_DIAGNOSE_KEY in Env-Variablen)."""
+    Erfordert Header X-Admin-Key: ADMIN_DIAGNOSE_KEY (nicht mehr als ?key= Query-Param)."""
     import requests
 
     expected_key = current_app.config.get("ADMIN_DIAGNOSE_KEY") or os.environ.get("ADMIN_DIAGNOSE_KEY")
-    if not expected_key or request.args.get("key") != expected_key:
-        return jsonify({"error": "Unauthorized – ?key=ADMIN_DIAGNOSE_KEY erforderlich"}), 401
+    if not expected_key or request.headers.get("X-Admin-Key") != expected_key:
+        return jsonify({"error": "Unauthorized – Header X-Admin-Key erforderlich"}), 401
 
     api_key = current_app.config.get("MAILGUN_API_KEY")
     api_base = current_app.config.get("MAILGUN_API_BASE", "https://api.eu.mailgun.net/v3")
@@ -147,10 +150,10 @@ def admin_mailgun_diagnose():
 @login_required
 def admin_fix_routes():
     """Erstellt eine Catch-All-Route für alle E-Mails an @domain.
-    Erfordert ?key=ADMIN_KEY (gesetzt über ADMIN_DIAGNOSE_KEY in Env-Variablen)."""
+    Erfordert Header X-Admin-Key: ADMIN_DIAGNOSE_KEY."""
     expected_key = current_app.config.get("ADMIN_DIAGNOSE_KEY") or os.environ.get("ADMIN_DIAGNOSE_KEY")
-    if not expected_key or request.args.get("key") != expected_key:
-        return jsonify({"error": "Unauthorized – ?key=ADMIN_DIAGNOSE_KEY erforderlich"}), 401
+    if not expected_key or request.headers.get("X-Admin-Key") != expected_key:
+        return jsonify({"error": "Unauthorized – Header X-Admin-Key erforderlich"}), 401
 
     from .auth import _ensure_catchall_route
     result = _ensure_catchall_route()
@@ -168,12 +171,12 @@ def admin_fix_routes():
 @login_required
 def admin_domain_migration():
     """Migriert alle CustomerSettings von einem alten Domain auf den aktuell konfigurierten MAILGUN_DOMAIN.
-    Erfordert ?key=ADMIN_DIAGNOSE_KEY&old_domain=alter-domain.com"""
+    Erfordert Header X-Admin-Key: ADMIN_DIAGNOSE_KEY sowie Query-Param old_domain=alter-domain.com."""
     from .auth import repariere_mailgun_route
 
     expected_key = current_app.config.get("ADMIN_DIAGNOSE_KEY") or os.environ.get("ADMIN_DIAGNOSE_KEY")
-    if not expected_key or request.args.get("key") != expected_key:
-        return jsonify({"error": "Unauthorized – ?key=ADMIN_DIAGNOSE_KEY erforderlich"}), 401
+    if not expected_key or request.headers.get("X-Admin-Key") != expected_key:
+        return jsonify({"error": "Unauthorized – Header X-Admin-Key erforderlich"}), 401
 
     old_domain = request.args.get("old_domain", "systemautomatik.com")
     new_domain = current_app.config.get("MAILGUN_DOMAIN", "systemautomatik.com")

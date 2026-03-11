@@ -99,7 +99,7 @@
     <kbd>Esc</kbd> oder <a href="{{ url_for('dashboard.index') }}">← Zurück zum Dashboard</a>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         window.location = '{{ url_for("dashboard.index") }}';

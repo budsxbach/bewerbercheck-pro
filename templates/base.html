@@ -79,7 +79,7 @@
     <!-- Cookie-Banner (nur Session-Cookies) -->
     <div class="cookie-banner" id="cookieBanner" style="display:none;">
         <p>Diese Website verwendet nur technisch notwendige Cookies für die Sitzungsverwaltung.</p>
-        <button class="btn btn-primary btn-sm" onclick="acceptCookies()">Verstanden</button>
+        <button class="btn btn-primary btn-sm" id="cookieAcceptBtn">Verstanden</button>
     </div>
 
     {% if config.PLAUSIBLE_DOMAIN %}
@@ -108,15 +108,15 @@
     });
 
     // Cookie-Banner mit Animation
+    var cookieBanner = document.getElementById('cookieBanner');
     if (!localStorage.getItem('cookies_accepted')) {
-        document.getElementById('cookieBanner').style.display = 'flex';
+        cookieBanner.style.display = 'flex';
     }
-    function acceptCookies() {
+    document.getElementById('cookieAcceptBtn').addEventListener('click', function() {
         localStorage.setItem('cookies_accepted', 'true');
-        var banner = document.getElementById('cookieBanner');
-        banner.classList.add('cookie-hiding');
-        setTimeout(function() { banner.style.display = 'none'; }, 300);
-    }
+        cookieBanner.classList.add('cookie-hiding');
+        setTimeout(function() { cookieBanner.style.display = 'none'; }, 300);
+    });
 
     // Loading-Overlay bei Klick auf Tabellenzeilen
     document.querySelectorAll('.clickable-row').forEach(function(row) {

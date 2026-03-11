@@ -205,11 +205,6 @@ a:hover { color: var(--primary-light); }
     border-radius: var(--radius);
     padding: 1.75rem;
     box-shadow: var(--shadow);
-    transition: box-shadow var(--transition), border-color var(--transition);
-}
-.card:hover {
-    box-shadow: var(--shadow-md);
-    border-color: var(--gray-300);
 }
 
 /* ── Glass Card (for special sections) ───────────────────── */
@@ -386,9 +381,8 @@ textarea.form-control { resize: vertical; min-height: 100px; line-height: 1.7; }
     font-size: .75rem;
     font-weight: 500;
     margin: .1rem;
-    transition: background var(--transition);
 }
-.skill-tag:hover { background: var(--gray-100); }
+
 .skill-tag-lg { font-size: .82rem; padding: .3rem .7rem; }
 .skill-more { background: var(--gray-100); color: var(--gray-500); }
 .skills-container { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .5rem; }
@@ -578,7 +572,6 @@ textarea.form-control { resize: vertical; min-height: 100px; line-height: 1.7; }
     border: 1px solid var(--gray-200);
     border-radius: var(--radius);
     padding: 2rem 1.75rem;
-    transition: all var(--transition);
     position: relative;
     overflow: hidden;
 }
@@ -591,14 +584,7 @@ textarea.form-control { resize: vertical; min-height: 100px; line-height: 1.7; }
     height: 3px;
     background: linear-gradient(90deg, var(--primary), var(--primary-dark));
     opacity: 0;
-    transition: opacity var(--transition);
 }
-.feature-card:hover {
-    box-shadow: var(--glow);
-    transform: translateY(-2px);
-    border-color: var(--gray-300);
-}
-.feature-card:hover::before { opacity: 1; }
 .feature-icon { font-size: 2.25rem; margin-bottom: 1rem; }
 .feature-card h3 {
     font-size: 1.05rem;
@@ -633,9 +619,7 @@ textarea.form-control { resize: vertical; min-height: 100px; line-height: 1.7; }
     align-items: flex-start;
     padding: 1.25rem;
     border-radius: var(--radius);
-    transition: background var(--transition);
 }
-.steps li:hover { background: var(--bg-card); }
 .step-number {
     flex-shrink: 0;
     width: 2.25rem;
@@ -670,11 +654,6 @@ textarea.form-control { resize: vertical; min-height: 100px; line-height: 1.7; }
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-glow);
-    transition: all var(--transition);
-}
-.pricing-card:hover {
-    box-shadow: var(--glow);
-    transform: translateY(-4px);
 }
 .pricing-header {
     background: linear-gradient(135deg, #00f0b5, #00d4aa);
@@ -936,9 +915,7 @@ textarea.form-control { resize: vertical; min-height: 100px; line-height: 1.7; }
     padding: 1rem 1.25rem;
     border-radius: var(--radius-sm);
     border: 1px solid var(--gray-100);
-    transition: all var(--transition);
 }
-.onboarding-step:hover { border-color: var(--gray-200); }
 .step-done { background: var(--bg-elevated); }
 .step-pending { background: var(--bg-card); border-color: var(--gray-200); }
 .step-check {
@@ -1366,9 +1343,8 @@ main.container { animation: fadeIn .2s ease; }
 }
 
 
-/* ── Stats-Bar Hover ─────────────────────────────────────── */
-.stat-item { transition: all var(--transition); cursor: default; }
-.stat-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--gray-300); }
+/* ── Stats-Bar ───────────────────────────────────────────── */
+.stat-item { cursor: default; }
 
 /* ── Cookie-Banner Animation ─────────────────────────────── */
 @keyframes slideUp {

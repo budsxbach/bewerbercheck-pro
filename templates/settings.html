@@ -27,7 +27,7 @@
     </p>
     <div class="email-display-box">
         <code id="bewerbungsEmail">{{ settings.eigene_email or 'Wird erstellt...' }}</code>
-        <button onclick="copyToClipboard('bewerbungsEmail', this)" class="btn btn-outline btn-sm" data-noloading="true">Kopieren</button>
+        <button id="copyBewerbungsBtn" class="btn btn-outline btn-sm" data-noloading="true">Kopieren</button>
     </div>
     <details style="margin-top:1rem;">
         <summary style="cursor:pointer; color: var(--gray-400); font-size:0.85em; font-weight: 500;">
@@ -106,7 +106,7 @@
             <p><strong>Schritt 2:</strong> Fügen Sie diese E-Mail als <strong>Editor</strong> hinzu:</p>
             <div class="email-display-box">
                 <code id="serviceEmail">{{ service_account_email }}</code>
-                <button onclick="copyToClipboard('serviceEmail', this)" class="btn btn-outline btn-sm" data-noloading="true">Kopieren</button>
+                <button id="copyServiceBtn" class="btn btn-outline btn-sm" data-noloading="true">Kopieren</button>
             </div>
             <p><strong>Schritt 3:</strong> Fügen Sie die URL Ihres Sheets unten ein.</p>
         </div>
@@ -232,5 +232,13 @@ function fallbackCopy(text, btn, callback) {
     }
     document.body.removeChild(ta);
 }
+
+// Event-Listener statt onclick (CSP erlaubt keine inline-Handler)
+document.getElementById('copyBewerbungsBtn').addEventListener('click', function() {
+    copyToClipboard('bewerbungsEmail', this);
+});
+document.getElementById('copyServiceBtn').addEventListener('click', function() {
+    copyToClipboard('serviceEmail', this);
+});
 </script>
 {% endblock %}

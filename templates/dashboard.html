@@ -256,7 +256,7 @@ document.querySelectorAll('.sortable-th').forEach(function(th) {
         <p style="font-size:.85rem; color:var(--gray-500); margin-bottom:.75rem;">Ihre Bewerbungs-E-Mail-Adresse:</p>
         <div class="email-display">
             <code id="emailCode">{{ current_user.settings.eigene_email }}</code>
-            <button onclick="copyEmail()" class="btn btn-sm btn-outline" id="copyBtn" data-noloading="true">
+            <button class="btn btn-sm btn-outline" id="copyBtn" data-noloading="true">
                 Kopieren
             </button>
         </div>
@@ -303,6 +303,9 @@ function copyEmail() {
         fallbackCopy();
     }
 }
+
+// Event-Listener statt onclick (CSP erlaubt keine inline-Handler)
+document.getElementById('copyBtn').addEventListener('click', copyEmail);
 </script>
 {% endif %}
 {% endblock %}

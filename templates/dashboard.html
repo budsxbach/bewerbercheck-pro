@@ -267,16 +267,41 @@ document.querySelectorAll('.sortable-th').forEach(function(th) {
 
 <script nonce="{{ csp_nonce }}">
 function copyEmail() {
-    var text = document.getElementById('emailCode').textContent;
-    navigator.clipboard.writeText(text).then(function() {
-        var btn = document.getElementById('copyBtn');
-        btn.textContent = 'Kopiert!';
+    var text = document.getElementById('emailCode').textContent.trim();
+    var btn = document.getElementById('copyBtn');
+
+    function zeigeErfolg() {
+        btn.textContent = '✓ Kopiert!';
         btn.classList.add('btn-copied');
         setTimeout(function() {
             btn.textContent = 'Kopieren';
             btn.classList.remove('btn-copied');
         }, 2000);
-    });
+    }
+
+    function fallbackCopy() {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try {
+            document.execCommand('copy');
+            zeigeErfolg();
+        } catch(e) {
+            btn.textContent = 'Bitte manuell kopieren';
+            setTimeout(function() { btn.textContent = 'Kopieren'; }, 3000);
+        }
+        document.body.removeChild(ta);
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(zeigeErfolg).catch(fallbackCopy);
+    } else {
+        fallbackCopy();
+    }
 }
 </script>
 {% endif %}

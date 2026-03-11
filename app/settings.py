@@ -17,26 +17,33 @@ def index():
         return redirect(url_for("auth.logout"))
 
     if request.method == "POST":
-        sheets_url = request.form.get("sheets_url", "").strip()
         stellenbeschreibung = request.form.get("stellenbeschreibung", "").strip()
         bewertungskriterien = request.form.get("bewertungskriterien", "").strip()
-
-        # Grundlegende URL-Validierung
-        parsed = urlparse(sheets_url) if sheets_url else None
-        if sheets_url and (parsed.netloc != "docs.google.com" or "/spreadsheets" not in parsed.path):
-            flash("Bitte geben Sie eine gültige Google Sheets URL ein.", "danger")
-            return render_template("settings.html", settings=settings, service_account_email=_get_service_account_email())
-
-        settings.sheets_url = sheets_url or None
         settings.stellenbeschreibung = stellenbeschreibung or None
         settings.bewertungskriterien = bewertungskriterien or None
         db.session.commit()
 
-        flash("Einstellungen gespeichert!", "success")
+        flash("KI-Einstellungen gespeichert!", "success")
         return redirect(url_for("settings_bp.index"))
 
     service_account_email = _get_service_account_email()
     return render_template("settings.html", settings=settings, service_account_email=service_account_email)
+
+
+@settings_bp.route("/einstellungen/sheets", methods=["POST"])
+@login_required
+def sheets_speichern():
+    """Speichert nur die Google Sheets URL – unabhängig von KI-Einstellungen."""
+    settings = current_user.settings
+    sheets_url = request.form.get("sheets_url", "").strip()
+    parsed = urlparse(sheets_url) if sheets_url else None
+    if sheets_url and (parsed.netloc != "docs.google.com" or "/spreadsheets" not in parsed.path):
+        flash("Bitte eine gültige Google Sheets URL einfügen.", "danger")
+        return redirect(url_for("settings_bp.index"))
+    settings.sheets_url = sheets_url or None
+    db.session.commit()
+    flash("Google Sheets gespeichert!", "success")
+    return redirect(url_for("settings_bp.index"))
 
 
 @settings_bp.route("/einstellungen/konto-loeschen", methods=["POST"])

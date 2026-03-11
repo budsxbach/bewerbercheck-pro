@@ -44,42 +44,21 @@
     </details>
 </div>
 
-<!-- Google Sheets -->
+<!-- KI-Bewerbungseinstellungen (Hauptfunktion) -->
 <div class="card settings-card">
     <div class="settings-header">
-        <h2>📊 Google Sheets (Optional)</h2>
-        {% if settings.sheets_url %}
-        <span class="check-done">✓ Verknüpft</span>
+        <h2>🤖 KI-Bewerbungseinstellungen</h2>
+        {% if has_criteria %}
+        <span class="check-done">✓ Konfiguriert</span>
         {% else %}
-        <span class="check-pending">Optional</span>
+        <span class="check-pending">Empfohlen</span>
         {% endif %}
     </div>
     <p style="font-size:.875rem; color:var(--gray-500); margin-bottom:1rem;">
-        Alternativ finden Sie alle Bewerbungen direkt unter <a href="{{ url_for('dashboard.tabelle') }}">Tabelle</a> – ohne Google-Konto.
+        Helfen der KI, Bewerber besser zu bewerten und einen treffgenauen Score zu vergeben.
     </p>
-    <div class="setup-steps">
-        <p><strong>Schritt 1:</strong> Öffnen Sie Ihr Google Sheet und klicken Sie auf „Teilen".</p>
-        <p>
-            <strong>Schritt 2:</strong> Fügen Sie diese E-Mail als <strong>Editor</strong> hinzu:
-        </p>
-        <div class="email-display-box">
-            <code id="serviceEmail">{{ service_account_email }}</code>
-            <button onclick="copyToClipboard('serviceEmail', this)" class="btn btn-outline btn-sm" data-noloading="true">Kopieren</button>
-        </div>
-        <p><strong>Schritt 3:</strong> Fügen Sie die URL Ihres Sheets unten ein.</p>
-    </div>
-
     <form method="POST" action="{{ url_for('settings_bp.index') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="form-group">
-            <label for="sheets_url">Google Sheets URL</label>
-            <input type="url" id="sheets_url" name="sheets_url"
-                   value="{{ settings.sheets_url or '' }}"
-                   placeholder="https://docs.google.com/spreadsheets/d/..."
-                   class="form-control">
-            <small class="form-hint" id="sheetsHint">Die URL aus der Adressleiste Ihres Browsers einfügen.</small>
-        </div>
-
         <div class="form-group">
             <label for="stellenbeschreibung">
                 Stellenbeschreibung
@@ -90,7 +69,6 @@
                       placeholder="Z.B.: Wir suchen einen Softwareentwickler mit Python-Kenntnissen für unser 10-köpfiges Team...">{{ settings.stellenbeschreibung or '' }}</textarea>
             <small class="form-hint">Hilft der KI, Bewerber besser zu verstehen.</small>
         </div>
-
         <div class="form-group">
             <label for="bewertungskriterien">
                 Bewertungskriterien
@@ -101,10 +79,49 @@
                       placeholder="Z.B.: Mindestens 3 Jahre Erfahrung, Python Pflicht, Deutsch C1 erforderlich, Englisch von Vorteil">{{ settings.bewertungskriterien or '' }}</textarea>
             <small class="form-hint">Je konkreter die Kriterien, desto genauer der Score.</small>
         </div>
+        <button type="submit" class="btn btn-primary">KI-Einstellungen speichern</button>
+    </form>
+</div>
 
-        <button type="submit" class="btn btn-primary">
-            Einstellungen speichern
-        </button>
+<!-- Google Sheets Export (optional) -->
+<div class="card settings-card">
+    <div class="settings-header">
+        <h2>📊 Google Sheets Export</h2>
+        {% if settings.sheets_url %}
+        <span class="check-done">✓ Verknüpft</span>
+        {% else %}
+        <span class="check-pending">Optional</span>
+        {% endif %}
+    </div>
+    <p style="font-size:.875rem; color:var(--gray-500); margin-bottom:.75rem;">
+        Bewerbungen automatisch in ein Google Sheet exportieren.
+        Alternativ: eingebaute <a href="{{ url_for('dashboard.tabelle') }}">Tabelle</a> – ohne Google-Konto.
+    </p>
+    <details style="margin-bottom:.75rem;">
+        <summary style="cursor:pointer; font-size:.875rem; color:var(--gray-500); font-weight:500;">
+            Einrichtung anzeigen ▸
+        </summary>
+        <div class="setup-steps" style="margin-top:.75rem;">
+            <p><strong>Schritt 1:</strong> Öffnen Sie Ihr Google Sheet und klicken Sie auf „Teilen".</p>
+            <p><strong>Schritt 2:</strong> Fügen Sie diese E-Mail als <strong>Editor</strong> hinzu:</p>
+            <div class="email-display-box">
+                <code id="serviceEmail">{{ service_account_email }}</code>
+                <button onclick="copyToClipboard('serviceEmail', this)" class="btn btn-outline btn-sm" data-noloading="true">Kopieren</button>
+            </div>
+            <p><strong>Schritt 3:</strong> Fügen Sie die URL Ihres Sheets unten ein.</p>
+        </div>
+    </details>
+    <form method="POST" action="{{ url_for('settings_bp.sheets_speichern') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+            <label for="sheets_url">Google Sheets URL</label>
+            <input type="url" id="sheets_url" name="sheets_url"
+                   value="{{ settings.sheets_url or '' }}"
+                   placeholder="https://docs.google.com/spreadsheets/d/..."
+                   class="form-control">
+            <small class="form-hint" id="sheetsHint">Die URL aus der Adressleiste Ihres Browsers einfügen.</small>
+        </div>
+        <button type="submit" class="btn btn-outline btn-sm">Sheets-URL speichern</button>
     </form>
 </div>
 

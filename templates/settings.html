@@ -193,16 +193,44 @@ if (sheetsInput) {
 }
 
 function copyToClipboard(elementId, btn) {
-    var text = document.getElementById(elementId).textContent;
-    navigator.clipboard.writeText(text).then(function() {
+    var text = document.getElementById(elementId).textContent.trim();
+
+    function zeigeErfolg() {
         var original = btn.textContent;
-        btn.textContent = 'Kopiert!';
+        btn.textContent = '✓ Kopiert!';
         btn.classList.add('btn-copied');
         setTimeout(function() {
             btn.textContent = original;
             btn.classList.remove('btn-copied');
         }, 2000);
-    });
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(zeigeErfolg).catch(function() {
+            // Fallback bei Permission-Fehler
+            fallbackCopy(text, btn, zeigeErfolg);
+        });
+    } else {
+        fallbackCopy(text, btn, zeigeErfolg);
+    }
+}
+
+function fallbackCopy(text, btn, callback) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+        document.execCommand('copy');
+        callback();
+    } catch(e) {
+        btn.textContent = 'Bitte manuell kopieren';
+        setTimeout(function() { btn.textContent = 'Kopieren'; }, 3000);
+    }
+    document.body.removeChild(ta);
 }
 </script>
 {% endblock %}

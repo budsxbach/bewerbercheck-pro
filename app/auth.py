@@ -84,6 +84,13 @@ def register():
         db.session.add(settings)
         db.session.commit()
 
+        # Willkommens-E-Mail senden (Fehler darf Registrierung nicht blockieren)
+        _send_willkommen_email(
+            to_email=email,
+            eigene_email=settings.eigene_email,
+            enddatum=user.testphase_enddatum,
+        )
+
         # Mailgun-Route anlegen
         route_result = _create_mailgun_route(user.id, settings.eigene_email)
         if route_result and not route_result.get("ok"):
@@ -319,6 +326,34 @@ def passwort_reset(token):
             return redirect(url_for("auth.login"))
 
     return render_template("passwort_reset.html", token=token)
+
+
+def _send_willkommen_email(to_email: str, eigene_email: str, enddatum) -> None:
+    """Willkommens-E-Mail nach erfolgreicher Registrierung."""
+    from app import mail
+    try:
+        enddatum_str = enddatum.strftime("%d.%m.%Y")
+        app_url = current_app.config.get("APP_URL", "https://bewerbercheck-pro.systemautomatik.com")
+        msg = Message(
+            subject="Willkommen bei Bewerbercheck-Pro – Ihr Konto ist bereit",
+            recipients=[to_email],
+            body=(
+                f"Hallo,\n\n"
+                f"Ihr Bewerbercheck-Pro Konto wurde erfolgreich erstellt.\n\n"
+                f"Ihre persönliche Bewerbungs-E-Mail-Adresse:\n"
+                f"{eigene_email}\n\n"
+                f"Tragen Sie diese Adresse in Ihre Stellenanzeigen ein – "
+                f"eingehende Bewerbungen werden automatisch analysiert und bewertet.\n\n"
+                f"Ihre kostenlose Testphase läuft bis zum {enddatum_str}.\n\n"
+                f"Einstellungen konfigurieren:\n"
+                f"{app_url}/settings\n\n"
+                f"Bei Fragen antworten Sie einfach auf diese E-Mail.\n\n"
+                f"Viele Grüße\nDas Bewerbercheck-Pro Team"
+            ),
+        )
+        mail.send(msg)
+    except Exception as e:
+        current_app.logger.error(f"Willkommens-E-Mail Fehler: {e}")
 
 
 def _send_reset_email(to_email: str, reset_url: str):

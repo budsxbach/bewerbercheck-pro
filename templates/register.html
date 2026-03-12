@@ -6,7 +6,7 @@
     <div class="auth-card">
         <div class="auth-logo"><img src="{{ url_for('static', filename='icon.svg') }}" width="48" height="48" alt="" class="auth-logo-img"> Bewerbercheck-Pro</div>
         <h1>Konto erstellen</h1>
-        <p class="auth-subtitle">14 Tage kostenlos testen – keine Kreditkarte nötig.</p>
+        <p class="auth-subtitle">14 Tage kostenlos testen – erst testen, dann zahlen.</p>
 
         <form method="POST" action="{{ url_for('auth.register') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -389,7 +389,6 @@ def stripe_checkout():
             payment_method_types=["card"],
             line_items=[{"price": current_app.config["STRIPE_PRICE_ID"], "quantity": 1}],
             mode="subscription",
-            subscription_data={"trial_period_days": 14},
             success_url=f"{app_url}/abo/erfolg?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{app_url}/dashboard",
             custom_text={

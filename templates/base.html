@@ -18,7 +18,7 @@
         <div class="nav-brand">
             <a href="{{ url_for('dashboard.index') }}" class="nav-brand-link"><img src="{{ url_for('static', filename='icon.svg') }}" width="28" height="28" alt="" class="nav-logo"> Bewerbercheck-Pro</a>
         </div>
-        <button class="nav-toggle" onclick="this.classList.toggle('active');document.querySelector('.nav-links').classList.toggle('nav-open')" aria-label="Menü">
+        <button class="nav-toggle" id="navToggle" aria-label="Menü">
             <span></span><span></span><span></span>
         </button>
         <div class="nav-links">
@@ -61,7 +61,7 @@
                 {% if category == 'success' %}✓{% elif category == 'danger' %}✕{% elif category == 'warning' %}!{% else %}i{% endif %}
             </span>
             <span class="toast-message">{{ message }}</span>
-            <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+            <button class="toast-close">&times;</button>
         </div>
         {% endfor %}
     </div>
@@ -87,6 +87,22 @@
     {% endif %}
 
     <script nonce="{{ csp_nonce }}">
+    // Hamburger-Menü Toggle (CSP-konform, kein inline onclick)
+    var navToggle = document.getElementById('navToggle');
+    if (navToggle) {
+        navToggle.addEventListener('click', function() {
+            this.classList.toggle('active');
+            document.querySelector('.nav-links').classList.toggle('nav-open');
+        });
+    }
+
+    // Toast-Schließen-Buttons (CSP-konform, kein inline onclick)
+    document.querySelectorAll('.toast-close').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            this.parentElement.remove();
+        });
+    });
+
     // Auto-dismiss toasts nach 5 Sekunden
     document.querySelectorAll('.toast').forEach(function(toast, i) {
         setTimeout(function() {

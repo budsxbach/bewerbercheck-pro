@@ -6,9 +6,9 @@
     <h1>Bewerbungsübersicht</h1>
     {% if not current_user.abo_aktiv %}
     <div class="trial-banner">
-        <span>🎯 Testphase – noch {{ current_user.testphase_tage_uebrig }} Tage</span>
+        <span>Kein aktives Abonnement</span>
         <a href="{{ url_for('auth.stripe_checkout') }}" class="btn btn-primary btn-sm">
-            Upgrade
+            Jetzt abonnieren
         </a>
     </div>
     {% endif %}

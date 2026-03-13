@@ -148,15 +148,10 @@
         </form>
     </div>
     {% endif %}
-    {% elif current_user.hat_zugang %}
-    <p class="status-trial">🎯 Testphase aktiv – noch {{ current_user.testphase_tage_uebrig }} Tage.</p>
+    {% else %}
+    <p class="status-inactive">Kein aktives Abonnement.</p>
     <a href="{{ url_for('auth.stripe_checkout') }}" class="btn btn-primary">
         Jetzt abonnieren – 29€/Monat
-    </a>
-    {% else %}
-    <p class="status-inactive">Kein aktives Abonnement. Ihre Testphase ist abgelaufen.</p>
-    <a href="{{ url_for('auth.stripe_checkout') }}" class="btn btn-primary">
-        Abonnement aktivieren
     </a>
     {% endif %}
 </div>

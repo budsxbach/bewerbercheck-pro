@@ -63,8 +63,7 @@ def register():
 
         user = User(
             email=email,
-            testphase_aktiv=True,
-            testphase_enddatum=_utcnow() + timedelta(days=TESTPHASE_TAGE),
+            testphase_aktiv=False,
         )
         user.set_password(passwort)
         db.session.add(user)
@@ -88,7 +87,6 @@ def register():
         _send_willkommen_email(
             to_email=email,
             eigene_email=settings.eigene_email,
-            enddatum=user.testphase_enddatum,
         )
 
         # Mailgun-Route anlegen
@@ -328,11 +326,10 @@ def passwort_reset(token):
     return render_template("passwort_reset.html", token=token)
 
 
-def _send_willkommen_email(to_email: str, eigene_email: str, enddatum) -> None:
+def _send_willkommen_email(to_email: str, eigene_email: str) -> None:
     """Willkommens-E-Mail nach erfolgreicher Registrierung."""
     from app import mail
     try:
-        enddatum_str = enddatum.strftime("%d.%m.%Y")
         app_url = current_app.config.get("APP_URL", "https://bewerbercheck-pro.systemautomatik.com")
         msg = Message(
             subject="Willkommen bei Bewerbercheck-Pro – Ihr Konto ist bereit",
@@ -344,7 +341,8 @@ def _send_willkommen_email(to_email: str, eigene_email: str, enddatum) -> None:
                 f"{eigene_email}\n\n"
                 f"Tragen Sie diese Adresse in Ihre Stellenanzeigen ein – "
                 f"eingehende Bewerbungen werden automatisch analysiert und bewertet.\n\n"
-                f"Ihre kostenlose Testphase läuft bis zum {enddatum_str}.\n\n"
+                f"Abonnement aktivieren:\n"
+                f"{app_url}/abo/checkout\n\n"
                 f"Einstellungen konfigurieren:\n"
                 f"{app_url}/settings\n\n"
                 f"Bei Fragen antworten Sie einfach auf diese E-Mail.\n\n"

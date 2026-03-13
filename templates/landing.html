@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Bewerbercheck-Pro – Bewerbungen automatisch auswerten{% endblock %}
-{% block meta_description %}Bewerbungen automatisch per KI auswerten, übersetzen und in Google Sheets sortieren. Jetzt starten ab 29€/Monat.{% endblock %}
+{% block meta_description %}Bewerbungen automatisch per KI auswerten, bewerten und im Dashboard verwalten. Jetzt starten ab 29€/Monat.{% endblock %}
 
 {% block head %}
 <!-- Open Graph -->
 <meta property="og:title" content="Bewerbercheck-Pro – Bewerbungen automatisch auswerten">
-<meta property="og:description" content="Bewerber schicken ihre Bewerbungsunterlagen per E-Mail. Unsere KI übersetzt, extrahiert und bewertet – automatisch in Ihrem Google Sheet.">
+<meta property="og:description" content="Bewerber schicken ihre Bewerbungsunterlagen per E-Mail. Unsere KI übersetzt, extrahiert und bewertet – automatisch in Ihrem persönlichen Dashboard.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{{ config.APP_URL }}/start">
 <meta property="og:image" content="{{ config.APP_URL }}{{ url_for('static', filename='og-image.jpg') }}">
@@ -14,7 +14,7 @@
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Bewerbercheck-Pro – Bewerbungen automatisch auswerten">
-<meta name="twitter:description" content="KI-gestützte Bewerbungsauswertung mit Google Sheets Integration. Ab 29€/Monat.">
+<meta name="twitter:description" content="KI-gestützte Bewerbungsauswertung mit persönlichem Dashboard. Ab 29€/Monat.">
 <meta name="twitter:image" content="{{ config.APP_URL }}{{ url_for('static', filename='og-image.jpg') }}">
 {% endblock %}
 
@@ -24,7 +24,7 @@
     <h1>Bewerbungen automatisch<br><span class="highlight">auswerten & sortieren</span></h1>
     <p class="hero-subtitle">
         Bewerber schicken ihre Bewerbungsunterlagen an Ihre persönliche E-Mail-Adresse.
-        Unsere KI übersetzt, extrahiert und bewertet – automatisch in Ihrem Google Sheet.
+        Unsere KI übersetzt, extrahiert und bewertet – automatisch in Ihrem persönlichen Dashboard.
     </p>
     <div class="hero-cta">
         <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-xl">
@@ -69,8 +69,8 @@
         </div>
         <div class="feature-card">
             <div class="feature-icon">📊</div>
-            <h3>Google Sheet</h3>
-            <p>Alle Bewerbungen landen automatisch in Ihrem Google Sheet – sortiert nach Score, jederzeit von überall abrufbar.</p>
+            <h3>Übersichtliches Dashboard</h3>
+            <p>Alle Bewerbungen sortiert nach Score – jederzeit von überall abrufbar, mit Begründung und Kontaktdaten.</p>
         </div>
     </div>
 </section>
@@ -120,7 +120,7 @@
         <ul class="pricing-features">
             <li>Eigene Bewerbungs-E-Mail-Adresse</li>
             <li>KI-Auswertung & Scoring</li>
-            <li>Google Sheets Integration</li>
+            <li>Dashboard mit Bewerbungsübersicht</li>
             <li>Unbegrenzte Bewerbungen</li>
             <li>7 Tage Rückerstattungsgarantie</li>
         </ul>

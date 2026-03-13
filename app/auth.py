@@ -519,17 +519,22 @@ def stripe_rueckerstattung():
     stripe.api_key = current_app.config["STRIPE_SECRET_KEY"]
 
     try:
-        # Charge-ID ermitteln: neuere Stripe-API liefert charge via payment_intent
+        # Charge-ID ermitteln: letzte 3 Rechnungen prüfen, kein Status-Filter
         charge_id = None
-        invoices = stripe.Invoice.list(customer=user.stripe_customer_id, limit=1, status="paid")
-        if invoices.data:
-            invoice = invoices.data[0]
-            charge_id = invoice.charge
-            if not charge_id and invoice.payment_intent:
-                pi = stripe.PaymentIntent.retrieve(invoice.payment_intent)
-                charge_id = getattr(pi, "latest_charge", None)
+        invoices = stripe.Invoice.list(customer=user.stripe_customer_id, limit=3)
+        for inv in invoices.data:
+            if inv.charge:
+                charge_id = inv.charge
+                break
+            if inv.payment_intent:
+                try:
+                    pi = stripe.PaymentIntent.retrieve(inv.payment_intent)
+                    charge_id = getattr(pi, "latest_charge", None)
+                    if charge_id:
+                        break
+                except Exception as pi_err:
+                    current_app.logger.warning(f"PaymentIntent abruf fehlgeschlagen: {pi_err}")
 
-        # Erst Stripe-Calls, dann DB – so bleibt der Zustand konsistent bei Fehlern
         if charge_id:
             stripe.Refund.create(charge=charge_id)
             flash_msg = "Ihre Rückerstattung wurde eingeleitet. Das Geld erscheint in 5–10 Werktagen."
@@ -537,8 +542,12 @@ def stripe_rueckerstattung():
             current_app.logger.info(f"Rückerstattung User {user.id}: kein Charge – nur Kündigung.")
             flash_msg = "Ihr Abonnement wurde gekündigt. Es wurde kein Betrag belastet."
 
+        # Abo kündigen – wenn bereits in Stripe gekündigt, weitermachen
         if user.stripe_subscription_id:
-            stripe.Subscription.cancel(user.stripe_subscription_id)
+            try:
+                stripe.Subscription.cancel(user.stripe_subscription_id)
+            except stripe.error.InvalidRequestError as sub_err:
+                current_app.logger.info(f"Subscription bereits gekündigt: {sub_err}")
 
         # DB erst nach erfolgreichen Stripe-Calls aktualisieren
         user.abo_aktiv = False
@@ -550,7 +559,7 @@ def stripe_rueckerstattung():
 
     except Exception as e:
         current_app.logger.error(f"Rückerstattungsfehler: {e}")
-        flash("Fehler bei der Rückerstattung. Bitte kontaktieren Sie den Support.", "danger")
+        flash(f"Fehler bei der Rückerstattung: {e}", "danger")
 
     return redirect(url_for("settings_bp.index"))
 

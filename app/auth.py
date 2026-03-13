@@ -511,34 +511,42 @@ def _handle_payment_succeeded(invoice):
 @login_required
 def stripe_rueckerstattung():
     """Vollständige Rückerstattung innerhalb der 7-Tage-Garantie."""
-    # Atomare Prüfung: abo_aktiv=True als Bedingung verhindert Race Condition
     user = User.query.filter_by(id=current_user.id, abo_aktiv=True).first()
     if not user or not user.geld_zurueck_berechtigt:
         flash("Die 7-Tage-Frist ist abgelaufen oder kein aktives Abonnement.", "danger")
         return redirect(url_for("settings_bp.index"))
 
-    # Abo sofort deaktivieren VOR Stripe-Calls (verhindert Doppel-Refund bei Race Condition)
-    user.abo_aktiv = False
-    user.abo_start_datum = None
-    db.session.commit()
-
     stripe.api_key = current_app.config["STRIPE_SECRET_KEY"]
 
     try:
-        invoices = stripe.Invoice.list(customer=user.stripe_customer_id, limit=1)
-        hat_charge = invoices.data and invoices.data[0].charge
+        # Charge-ID ermitteln: neuere Stripe-API liefert charge via payment_intent
+        charge_id = None
+        invoices = stripe.Invoice.list(customer=user.stripe_customer_id, limit=1, status="paid")
+        if invoices.data:
+            invoice = invoices.data[0]
+            charge_id = invoice.charge
+            if not charge_id and invoice.payment_intent:
+                pi = stripe.PaymentIntent.retrieve(invoice.payment_intent)
+                charge_id = getattr(pi, "latest_charge", None)
 
-        if hat_charge:
-            stripe.Refund.create(charge=invoices.data[0].charge)
-            flash("Ihre Rückerstattung wurde eingeleitet. Das Geld erscheint in 5–10 Werktagen.", "success")
+        # Erst Stripe-Calls, dann DB – so bleibt der Zustand konsistent bei Fehlern
+        if charge_id:
+            stripe.Refund.create(charge=charge_id)
+            flash_msg = "Ihre Rückerstattung wurde eingeleitet. Das Geld erscheint in 5–10 Werktagen."
         else:
-            # Trial-User: noch keine Zahlung → nur Abo kündigen, kein Refund nötig
-            current_app.logger.info(
-                f"Rückerstattung für User {user.id}: kein Charge gefunden – nur Abo-Kündigung."
-            )
-            flash("Ihr Abonnement wurde gekündigt. Es wurde kein Betrag belastet.", "success")
+            current_app.logger.info(f"Rückerstattung User {user.id}: kein Charge – nur Kündigung.")
+            flash_msg = "Ihr Abonnement wurde gekündigt. Es wurde kein Betrag belastet."
 
-        stripe.Subscription.cancel(user.stripe_subscription_id)
+        if user.stripe_subscription_id:
+            stripe.Subscription.cancel(user.stripe_subscription_id)
+
+        # DB erst nach erfolgreichen Stripe-Calls aktualisieren
+        user.abo_aktiv = False
+        user.abo_start_datum = None
+        user.stripe_subscription_id = None
+        db.session.commit()
+
+        flash(flash_msg, "success")
 
     except Exception as e:
         current_app.logger.error(f"Rückerstattungsfehler: {e}")

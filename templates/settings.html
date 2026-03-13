@@ -156,16 +156,16 @@
     {% endif %}
 </div>
 
-<!-- Gefahrenzone -->
-<div class="card settings-card danger-zone">
-    <h2>Gefahrenzone</h2>
+<!-- Konto löschen -->
+<div class="card settings-card delete-zone">
+    <h2>Konto löschen</h2>
     <p style="color: var(--gray-500); font-size: .9rem; margin-bottom: 1rem;">
-        Diese Aktion kann nicht rückgängig gemacht werden. Alle Ihre Daten (Bewerbungen, Einstellungen, Konto) werden unwiderruflich gelöscht.
+        Alle Ihre Daten (Bewerbungen, Einstellungen, Konto) werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
     </p>
     <form method="POST" action="{{ url_for('settings_bp.konto_loeschen') }}"
-          onsubmit="return confirm('Sind Sie sicher? Alle Daten werden unwiderruflich gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden.');">
+          onsubmit="return confirm('Möchten Sie Ihr Konto wirklich löschen? Alle Daten werden dauerhaft entfernt.');">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn btn-danger">Konto unwiderruflich löschen</button>
+        <button type="submit" class="btn btn-delete">Konto löschen</button>
     </form>
 </div>
 

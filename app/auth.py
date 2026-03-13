@@ -354,6 +354,28 @@ def _send_willkommen_email(to_email: str, eigene_email: str) -> None:
         current_app.logger.error(f"Willkommens-E-Mail Fehler: {e}")
 
 
+def _send_rueckerstattung_email(to_email: str) -> None:
+    """Bestätigungs-E-Mail nach erfolgreicher Rückerstattung."""
+    from app import mail
+    try:
+        msg = Message(
+            subject="Bewerbercheck-Pro – Rückerstattung bestätigt",
+            recipients=[to_email],
+            body=(
+                f"Hallo,\n\n"
+                f"Ihre Rückerstattung wurde erfolgreich eingeleitet.\n\n"
+                f"Der Betrag wird innerhalb von 5–10 Werktagen auf Ihr Zahlungsmittel zurückgebucht.\n\n"
+                f"Ihr Konto wurde deaktiviert. Sie können sich jederzeit neu registrieren "
+                f"und ein Abonnement abschließen.\n\n"
+                f"Bei Fragen antworten Sie einfach auf diese E-Mail.\n\n"
+                f"Viele Grüße\nDas Bewerbercheck-Pro Team"
+            ),
+        )
+        mail.send(msg)
+    except Exception as e:
+        current_app.logger.error(f"Rückerstattungs-E-Mail Fehler: {e}")
+
+
 def _send_reset_email(to_email: str, reset_url: str):
     from app import mail
     try:
@@ -519,28 +541,23 @@ def stripe_rueckerstattung():
     stripe.api_key = current_app.config["STRIPE_SECRET_KEY"]
 
     try:
-        # Charge-ID ermitteln: .get() statt Attributzugriff (SDK wirft sonst AttributeError)
+        # Zuverlässigster Weg: Charge direkt für Customer abrufen
         charge_id = None
-        invoices = stripe.Invoice.list(customer=user.stripe_customer_id, limit=3)
-        for inv in invoices.data:
-            charge_id = inv.get("charge")
-            if charge_id:
-                break
-            pi_id = inv.get("payment_intent")
-            if pi_id:
-                try:
-                    pi = stripe.PaymentIntent.retrieve(pi_id)
-                    charge_id = pi.get("latest_charge")
-                    if charge_id:
-                        break
-                except Exception as pi_err:
-                    current_app.logger.warning(f"PaymentIntent abruf fehlgeschlagen: {pi_err}")
+        charges = stripe.Charge.list(customer=user.stripe_customer_id, limit=1)
+        if charges.data:
+            latest_charge = charges.data[0]
+            # Nur erstatten wenn noch nicht erstattet
+            if not latest_charge.get("refunded"):
+                charge_id = latest_charge.get("id")
+
+        current_app.logger.info(f"Rückerstattung User {user.id}: charge_id={charge_id}")
 
         if charge_id:
             stripe.Refund.create(charge=charge_id)
             flash_msg = "Ihre Rückerstattung wurde eingeleitet. Das Geld erscheint in 5–10 Werktagen."
+            _send_rueckerstattung_email(user.email)
         else:
-            current_app.logger.info(f"Rückerstattung User {user.id}: kein Charge – nur Kündigung.")
+            current_app.logger.info(f"Rückerstattung User {user.id}: kein Charge oder bereits erstattet.")
             flash_msg = "Ihr Abonnement wurde gekündigt. Es wurde kein Betrag belastet."
 
         # Abo kündigen – wenn bereits in Stripe gekündigt, weitermachen

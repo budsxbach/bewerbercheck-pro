@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Bewerbercheck-Pro – Bewerbungen automatisch auswerten{% endblock %}
-{% block meta_description %}Bewerbungen automatisch per KI auswerten, übersetzen und in Google Sheets sortieren. 14 Tage kostenlos testen.{% endblock %}
+{% block meta_description %}Bewerbungen automatisch per KI auswerten, übersetzen und in Google Sheets sortieren. Jetzt starten ab 29€/Monat.{% endblock %}
 
 {% block head %}
 <!-- Open Graph -->
@@ -14,7 +14,7 @@
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Bewerbercheck-Pro – Bewerbungen automatisch auswerten">
-<meta name="twitter:description" content="KI-gestützte Bewerbungsauswertung mit Google Sheets Integration. 14 Tage kostenlos.">
+<meta name="twitter:description" content="KI-gestützte Bewerbungsauswertung mit Google Sheets Integration. Ab 29€/Monat.">
 <meta name="twitter:image" content="{{ config.APP_URL }}{{ url_for('static', filename='og-image.jpg') }}">
 {% endblock %}
 
@@ -28,10 +28,10 @@
     </p>
     <div class="hero-cta">
         <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-xl">
-            Kostenlos 14 Tage testen
+            Jetzt kostenlos registrieren
         </a>
         <a href="#how-it-works" class="btn btn-outline" style="margin-top:.25rem;">So funktioniert's →</a>
-        <p class="hero-note">Erst testen, dann zahlen &middot; In 60 Sekunden startklar</p>
+        <p class="hero-note">In 60 Sekunden startklar &middot; 7 Tage Rückerstattungsgarantie</p>
     </div>
 </section>
 
@@ -42,8 +42,8 @@
         <span>EU-Server</span>
     </div>
     <div class="trust-item">
-        <strong>Erst testen, dann zahlen</strong>
-        <span>14 Tage gratis</span>
+        <strong>7 Tage Rückerstattung</strong>
+        <span>Ohne Risiko starten</span>
     </div>
     <div class="trust-item">
         <strong>Score 1–10</strong>
@@ -122,7 +122,7 @@
             <li>KI-Auswertung & Scoring</li>
             <li>Google Sheets Integration</li>
             <li>Unbegrenzte Bewerbungen</li>
-            <li>14 Tage kostenlos testen</li>
+            <li>7 Tage Rückerstattungsgarantie</li>
         </ul>
         <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg btn-full">
             Jetzt starten
@@ -164,10 +164,10 @@
         </div>
         <div class="faq-item" onclick="this.classList.toggle('faq-open')">
             <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
-                Was passiert nach der Testphase?
+                Was passiert wenn ich kündige?
                 <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
             </div>
-            <div class="faq-answer"><div><p>Nach 14 Tagen werden keine neuen Bewerbungen mehr verarbeitet, bis Sie ein Abo aktivieren. Ihre bestehenden Daten bleiben erhalten.</p></div></div>
+            <div class="faq-answer"><div><p>Nach der Kündigung werden keine neuen Bewerbungen mehr verarbeitet. Ihre bestehenden Daten bleiben erhalten und können jederzeit eingesehen werden.</p></div></div>
         </div>
         <div class="faq-item" onclick="this.classList.toggle('faq-open')">
             <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">

@@ -519,17 +519,18 @@ def stripe_rueckerstattung():
     stripe.api_key = current_app.config["STRIPE_SECRET_KEY"]
 
     try:
-        # Charge-ID ermitteln: letzte 3 Rechnungen prüfen, kein Status-Filter
+        # Charge-ID ermitteln: .get() statt Attributzugriff (SDK wirft sonst AttributeError)
         charge_id = None
         invoices = stripe.Invoice.list(customer=user.stripe_customer_id, limit=3)
         for inv in invoices.data:
-            if inv.charge:
-                charge_id = inv.charge
+            charge_id = inv.get("charge")
+            if charge_id:
                 break
-            if inv.payment_intent:
+            pi_id = inv.get("payment_intent")
+            if pi_id:
                 try:
-                    pi = stripe.PaymentIntent.retrieve(inv.payment_intent)
-                    charge_id = getattr(pi, "latest_charge", None)
+                    pi = stripe.PaymentIntent.retrieve(pi_id)
+                    charge_id = pi.get("latest_charge")
                     if charge_id:
                         break
                 except Exception as pi_err:

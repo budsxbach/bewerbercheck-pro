@@ -134,55 +134,67 @@
 <section class="faq">
     <h2>Häufige Fragen</h2>
     <div class="faq-list">
-        <div class="faq-item" onclick="this.classList.toggle('faq-open')">
-            <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
+        <div class="faq-item">
+            <div class="faq-header">
                 Welche Sprachen werden unterstützt?
-                <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
+                <span class="faq-icon">+</span>
             </div>
             <div class="faq-answer"><div><p>Die KI erkennt und übersetzt automatisch Bewerbungen in allen gängigen Sprachen ins Deutsche.</p></div></div>
         </div>
-        <div class="faq-item" onclick="this.classList.toggle('faq-open')">
-            <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
+        <div class="faq-item">
+            <div class="faq-header">
                 Wie sicher sind meine Daten?
-                <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
+                <span class="faq-icon">+</span>
             </div>
             <div class="faq-answer"><div><p>Alle Daten werden verschlüsselt übertragen und auf EU-Servern gespeichert. Wir geben keine Daten an Dritte weiter. Sie können Ihr Konto jederzeit löschen (DSGVO Art. 17).</p></div></div>
         </div>
-        <div class="faq-item" onclick="this.classList.toggle('faq-open')">
-            <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
+        <div class="faq-item">
+            <div class="faq-header">
                 Kann ich jederzeit kündigen?
-                <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
+                <span class="faq-icon">+</span>
             </div>
             <div class="faq-answer"><div><p>Ja, Sie können Ihr Abonnement jederzeit mit einem Klick im Kundenportal kündigen. Es gibt keine Vertragsbindung.</p></div></div>
         </div>
-        <div class="faq-item" onclick="this.classList.toggle('faq-open')">
-            <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
+        <div class="faq-item">
+            <div class="faq-header">
                 Wo werden meine Daten gespeichert?
-                <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
+                <span class="faq-icon">+</span>
             </div>
             <div class="faq-answer"><div><p>Alle Daten werden auf deutschen bzw. EU-Servern gespeichert. Die Datenbank ist verschlüsselt. Bei Kontolöschung werden alle Daten unwiderruflich entfernt.</p></div></div>
         </div>
-        <div class="faq-item" onclick="this.classList.toggle('faq-open')">
-            <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
+        <div class="faq-item">
+            <div class="faq-header">
                 Was passiert wenn ich kündige?
-                <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
+                <span class="faq-icon">+</span>
             </div>
             <div class="faq-answer"><div><p>Nach der Kündigung werden keine neuen Bewerbungen mehr verarbeitet. Ihre bestehenden Daten bleiben erhalten und können jederzeit eingesehen werden.</p></div></div>
         </div>
-        <div class="faq-item" onclick="this.classList.toggle('faq-open')">
-            <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
+        <div class="faq-item">
+            <div class="faq-header">
                 Welche Dateiformate werden unterstützt?
-                <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
+                <span class="faq-icon">+</span>
             </div>
             <div class="faq-answer"><div><p>PDF-Anhänge werden automatisch ausgelesen. Auch Bewerbungen im E-Mail-Text selbst werden verarbeitet. DOC/DOCX und TXT werden ebenfalls unterstützt.</p></div></div>
         </div>
-        <div class="faq-item" onclick="this.classList.toggle('faq-open')">
-            <div style="padding:1rem 1.25rem; cursor:pointer; font-weight:600; font-size:.95rem; color:var(--gray-800); display:flex; align-items:center; justify-content:space-between;">
+        <div class="faq-item">
+            <div class="faq-header">
                 Erhalten Bewerber eine Bestätigungs-E-Mail?
-                <span style="font-size:1.2rem; color:var(--gray-400); transition:transform .3s;">+</span>
+                <span class="faq-icon">+</span>
             </div>
             <div class="faq-answer"><div><p>Nein, Bewerber erhalten keine automatische Antwort. Die Kommunikation mit Bewerbern liegt weiterhin bei Ihnen – Bewerbercheck-Pro verarbeitet nur im Hintergrund.</p></div></div>
         </div>
     </div>
 </section>
+
+<script nonce="{{ csp_nonce }}">
+// FAQ Accordion – CSP-konform, kein inline onclick
+document.querySelectorAll('.faq-item .faq-header').forEach(function(header) {
+    header.addEventListener('click', function() {
+        var item = this.closest('.faq-item');
+        var icon = this.querySelector('.faq-icon');
+        item.classList.toggle('faq-open');
+        icon.textContent = item.classList.contains('faq-open') ? '−' : '+';
+    });
+});
+</script>
 {% endblock %}

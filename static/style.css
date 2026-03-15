@@ -1131,9 +1131,27 @@ kbd {
     overflow: hidden;
     transition: all var(--transition);
 }
-.faq-item[open] {
+.faq-item[open],
+.faq-item.faq-open {
     box-shadow: var(--shadow-md);
     border-color: var(--gray-300);
+}
+.faq-header {
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: .95rem;
+    color: var(--gray-800);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+}
+.faq-icon {
+    font-size: 1.2rem;
+    color: var(--gray-400);
+    transition: transform var(--transition);
+    flex-shrink: 0;
 }
 .faq-item summary {
     padding: 1rem 1.25rem;

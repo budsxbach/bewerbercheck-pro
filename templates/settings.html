@@ -35,8 +35,7 @@
         </summary>
         <div style="margin-top:0.75rem; padding:1rem; background: var(--warning-light); border-radius: var(--radius-sm); border:1px solid rgba(217,119,6,.15);">
             <p style="margin:0 0 0.75rem; font-size:0.9em; color: var(--gray-600);">Falls keine Bewerbungen ankommen, kann die Weiterleitungsregel neu erstellt werden:</p>
-            <form method="POST" action="{{ url_for('settings_bp.route_reparieren') }}"
-                  onsubmit="return confirm('Mailgun-Route neu erstellen?');">
+            <form id="formRouteReparieren" method="POST" action="{{ url_for('settings_bp.route_reparieren') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-outline btn-sm">Route neu erstellen</button>
             </form>
@@ -139,8 +138,7 @@
             <strong>✓ 7-Tage-Geld-zurück-Garantie aktiv</strong><br>
             <span style="color: var(--gray-500); font-size: .85rem;">Sie können innerhalb der ersten 7 Tage eine vollständige Rückerstattung beantragen.</span>
         </p>
-        <form method="POST" action="{{ url_for('auth.stripe_rueckerstattung') }}"
-              onsubmit="return confirm('Möchten Sie wirklich eine vollständige Rückerstattung beantragen? Ihr Abo wird sofort gekündigt.')">
+        <form id="formRueckerstattung" method="POST" action="{{ url_for('auth.stripe_rueckerstattung') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-danger btn-sm">
                 Rückerstattung beantragen
@@ -162,8 +160,7 @@
     <p style="color: var(--gray-500); font-size: .9rem; margin-bottom: 1rem;">
         Alle Ihre Daten (Bewerbungen, Einstellungen, Konto) werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
     </p>
-    <form method="POST" action="{{ url_for('settings_bp.konto_loeschen') }}"
-          onsubmit="return confirm('Möchten Sie Ihr Konto wirklich löschen? Alle Daten werden dauerhaft entfernt.');">
+    <form id="formKontoLoeschen" method="POST" action="{{ url_for('settings_bp.konto_loeschen') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn btn-delete">Konto löschen</button>
     </form>
@@ -235,5 +232,25 @@ document.getElementById('copyBewerbungsBtn').addEventListener('click', function(
 document.getElementById('copyServiceBtn').addEventListener('click', function() {
     copyToClipboard('serviceEmail', this);
 });
+
+// Bestätigungs-Dialoge CSP-konform (kein onsubmit-Attribut)
+var formRoute = document.getElementById('formRouteReparieren');
+if (formRoute) {
+    formRoute.addEventListener('submit', function(e) {
+        if (!confirm('Mailgun-Route neu erstellen?')) e.preventDefault();
+    });
+}
+var formRefund = document.getElementById('formRueckerstattung');
+if (formRefund) {
+    formRefund.addEventListener('submit', function(e) {
+        if (!confirm('Möchten Sie wirklich eine vollständige Rückerstattung beantragen? Ihr Abo wird sofort gekündigt.')) e.preventDefault();
+    });
+}
+var formDelete = document.getElementById('formKontoLoeschen');
+if (formDelete) {
+    formDelete.addEventListener('submit', function(e) {
+        if (!confirm('Möchten Sie Ihr Konto wirklich löschen? Alle Daten werden dauerhaft entfernt.')) e.preventDefault();
+    });
+}
 </script>
 {% endblock %}

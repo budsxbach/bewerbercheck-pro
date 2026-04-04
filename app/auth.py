@@ -152,7 +152,7 @@ def _catchall_route_exists() -> bool:
 
         for route in routes:
             expression = route.get("expression", "")
-            if f"@{domain}" in expression and ("catch_all" in expression or "match_header" not in expression):
+            if f".*@{domain}" in expression:
                 return True
         return False
     except Exception:
@@ -427,6 +427,23 @@ def stripe_checkout():
 @auth_bp.route("/abo/erfolg")
 @login_required
 def stripe_erfolg():
+    # Stripe-Session sofort prüfen, damit abo_aktiv nicht auf Webhook warten muss
+    session_id = request.args.get("session_id")
+    if session_id:
+        try:
+            stripe.api_key = current_app.config["STRIPE_SECRET_KEY"]
+            checkout_session = stripe.checkout.Session.retrieve(session_id)
+            if checkout_session.payment_status == "paid":
+                if not current_user.abo_aktiv:
+                    current_user.abo_aktiv = True
+                    if not current_user.abo_start_datum:
+                        from app.models import _utcnow
+                        current_user.abo_start_datum = _utcnow()
+                    if checkout_session.subscription and not current_user.stripe_subscription_id:
+                        current_user.stripe_subscription_id = checkout_session.subscription
+                    db.session.commit()
+        except Exception as e:
+            current_app.logger.warning(f"Checkout Session Sync Fehler: {e}")
     flash("Ihr Abonnement wurde aktiviert! Willkommen bei Bewerbercheck-Pro.", "success")
     return redirect(url_for("settings_bp.index"))
 
